@@ -1,0 +1,12 @@
+#-----------------------------------------------------------
+# Vivado v2019.1 (64-bit)
+# SW Build 2552052 on Fri May 24 14:49:42 MDT 2019
+# IP Build 2548770 on Fri May 24 18:01:18 MDT 2019
+# Start of session at: Mon Jan  6 12:32:44 2025
+# Process ID: 13464
+# Current directory: D:/All/Software/ZZ-Hardware_Old/Sample_Code_Alghasi/Sample_project_QSPI_Upper256/Sample_project_QSPI_Upper256.runs/synth_1
+# Command line: vivado.exe -log hw_wrapper.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source hw_wrapper.tcl
+# Log file: D:/All/Software/ZZ-Hardware_Old/Sample_Code_Alghasi/Sample_project_QSPI_Upper256/Sample_project_QSPI_Upper256.runs/synth_1/hw_wrapper.vds
+# Journal file: D:/All/Software/ZZ-Hardware_Old/Sample_Code_Alghasi/Sample_project_QSPI_Upper256/Sample_project_QSPI_Upper256.runs/synth_1\vivado.jou
+#-----------------------------------------------------------
+source hw_wrapper.tcl -notrace

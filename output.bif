@@ -1,0 +1,7 @@
+//arch = zynq; split = false; format = BIN
+the_ROM_image:
+{
+	[bootloader]D:\All\Software\ZZ-Hardware_Old\Sample_Code_Alghasi\Sample_project_QSPI_Upper256\Sample_project_QSPI_Upper256.sdk\FSBL\Debug\FSBL.elf
+	D:\All\Software\ZZ-Hardware_Old\Sample_Code_Alghasi\Sample_project_QSPI_Upper256\Sample_project_QSPI_Upper256.sdk\hw_wrapper_hw_platform_0\hw_wrapper.bit
+	D:\All\Software\ZZ-Hardware_Old\Sample_Code_Alghasi\Sample_project_QSPI_Upper256\Sample_project_QSPI_Upper256.sdk\QSPI_Test\Debug\QSPI_Test.elf
+}

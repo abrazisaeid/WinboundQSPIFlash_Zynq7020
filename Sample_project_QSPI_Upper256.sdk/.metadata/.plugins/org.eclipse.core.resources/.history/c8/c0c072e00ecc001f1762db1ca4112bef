@@ -1,0 +1,2036 @@
+#if(1)  //----------------------   S: Header Define What Is This File?
+#define This_Is_SSBL      0
+#define This_Is_destroyed 0
+#define This_Is_Core0     0
+#define This_Is_Core1     1
+#define This_Is_SSBL_Destroy_Core1 (This_Is_SSBL+This_Is_destroyed+This_Is_Core1)
+#define This_Is_SSBL_Core1         (This_Is_SSBL+This_Is_Core1)
+#define This_Is_SSBL_Destroy       (This_Is_SSBL+This_Is_destroyed)
+#endif  //----------------------   E: Header Define What Is This File?
+
+#if(1)  //----------------------   S: Header Include
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include "sleep.h"
+#include "xgpiops.h"
+#include "xil_types.h"
+#include "xil_cache.h"
+#include "xil_printf.h"
+#include "xparameters.h"
+#include "xparameters_ps.h"
+#include "xqspips.h"
+#include "xscugic.h"
+#include "xscutimer.h"
+#include "xttcps.h"
+#include "xscuwdt.h"
+#include "xuartps.h"
+#include "xil_mmu.h"
+#include "xadcps.h"
+#include "xdmaps.h"
+#include "lwip/tcp.h"
+#include "lwip/priv/tcp_priv.h"
+#include "lwip/init.h"
+#include "lwip/inet.h"
+#include "lwipopts.h"
+#include "netif/xadapter.h"
+#include "netif/xemacpsif.h"
+#include "xusbps.h"
+#include "stdbool.h"
+#include<math.h>
+#if(This_Is_SSBL_Destroy_Core1)
+#include "ff.h"
+#endif
+#endif  //----------------------   E: Header Incloud
+
+#if(1)  //----------------------   S: General
+    #define MAX(a, b) (((a) > (b)) ? (a) : (b))
+    #define IsFRA (Main_Version>200 && Main_Version<210)
+    #define Const_For_Vivado 10000000
+    #define Counter_If_Xil_Print  100
+    #define Delay_Xil_Printf  for(int ooooo=0; ooooo<Counter_If_Xil_Print; ooooo++)
+
+
+    typedef enum {
+         DISABLE = 0,
+         ENABLE = !DISABLE
+    } FunctionalState;
+    typedef enum { // ---------- AV_Delataphi -----------------------------
+        __AV = 0,
+        __Phi,
+    } AV_Delataphi;
+    typedef enum { // ---------- CaseNumbers -----------------------------
+        CaseNumbers_None                         = 0,
+        CaseNumbers_Start                        = 1,
+        CaseNumbers_DC                           = 2,
+        CaseNumbers_DCReset                      = 3,
+        CaseNumbers_Sync                         = 4,
+        CaseNumbers_Next_Actual                  = 6,
+        CaseNumbers_HardwareConfig               = 8,
+        CaseNumbers_GooseConfig                  = 9,
+        CaseNumbers_SVConfig                     = 10,
+        CaseNumbers_Alive                        = 12,
+        CaseNumber_TestLAN                       = 13,
+        CaseNumbers_FrameInfo                    = 16,
+        CaseNumbers_StopTest                     = 64,
+        CaseNumbers_FillRam                      = 123,
+        CaseNumbers_FlashInBootLoaderMode        = 167,
+        CaseNumbers_ReadIpConfig                 = 183,
+        CaseNumbers_WriteIpConfig                = 199,
+        CaseNumbers_ClearError                   = 2048,
+        CaseNumbers_ClearCounterErrorOvercurrent = 3072,
+        CaseNumbers_ResetHardware                = 4096,
+        CaseNumbers_KeyTrigger                   = 8192,
+        CaseNumbers_UploadCalibration            = 16384,
+        CaseNumbers_UploadCalibration_FRA        = 16385,
+        CaseNumbers_DownloadCalibration          = 32768,
+        CaseNumbers_EraseCalibrationForFlash     = 32769,
+        CaseNumbers_DC_GetActualValue            = 65537,
+        CaseNumbers_CalibrationOptoHall          = 131072,
+        CaseNumbers_FlashInProgramMode           = 123456123,
+    } CaseNumbers;
+
+    #define PercisionCompare                   0.000000001
+    #define Number_Of_VI                       12
+    #define FRA_Number_Of_Resistors            8
+    #define FRA_Number_Of_Gain                 8
+    #define AV_Phi                             2
+    #define FRA_Number_Of_Frequncy             42
+
+    uint32_t     Main_Version;
+
+    void Correct_Serial_Number(void);
+    uint32_t Correct_Serial_Number_Specific(int serial_Fuck);
+    void Zynq7020_Init(void);
+    void Detect_Main_Version(void);
+    int8_t IsGreaterOrEqual(double x1, double x2);
+    int8_t IsLessOrEqual(double x1, double x2);
+    int8_t IsEqual(double x1, double x2);
+    int32_t Calculate_Calib(double x1, double x2, double y1, double y2, double x);
+
+#endif  //----------------------   E: General
+#if(1)  //----------------------   S: LED
+    typedef enum { // ---------- LEDs ------------------------------------
+        LEDs_MainRelay1 = 0,
+        LEDs_MainRelay2,
+        LEDs_Connected,
+        LEDs_Error,
+        LEDs_BO1,
+        LEDs_BO2,
+        LEDs_BO3,
+        LEDs_BO4,
+        LEDs_BI9,
+        LEDs_BI10,
+        LEDs_BI1,
+        LEDs_BI2,
+        LEDs_BI3,
+        LEDs_BI4,
+        LEDs_BI5,
+        LEDs_BI6,
+        LEDs_BI7,
+        LEDs_BI8,
+        LEDs_VB1,
+        LEDs_VB2,
+        LEDs_VB3,
+        LEDs_VA1,
+        LEDs_VA2,
+        LEDs_VA3,
+        LEDs_IA1,
+        LEDs_IA2,
+        LEDs_IA3,
+        LEDs_IB1,
+        LEDs_IB2,
+        LEDs_IB3,
+        LEDs_IBN,
+        LEDs_IAN,
+        LEDs_VAN,
+        LEDs_VBN,
+        LEDs_BO1N,
+        LEDs_BO2N,
+        LEDs_BO3N,
+        LEDs_BO4N,
+        LEDs_BI9N,
+        LEDs_BI10N,
+        LEDs_BI8N,
+        LEDs_BI7N,
+        LEDs_BI6N,
+        LEDs_BI5N,
+        LEDs_BI4N,
+        LEDs_BI3N,
+        LEDs_BI2N,
+        LEDs_BI1N,
+        LEDs_WIFi,
+    } LEDs;
+    typedef enum { // ---------- LED_data_Index --------------------------
+        LED_Data_Color = 0,
+        LED_Data_Blinking,
+        LED_Data_Intensity
+    } LED_data_Index;
+
+    #define  SetLEDcolor(ledIndex, color, blinking, intensity)         {LED_Data[ledIndex][LED_Data_Color]=color; LED_Data[ledIndex][LED_Data_Blinking]=blinking; LED_Data[ledIndex][LED_Data_Intensity]=intensity;}
+
+    uint8_t                    LED_Data[64][3];
+    uint32_t                   LED_Data_Counter[64];
+    uint8_t                    DisableAllLED;
+
+    void Set_ALL_LED_Color_To_FPGA(void);
+    void LED_Check_Calibration_And_Set(void);
+#endif  //----------------------   E: LED
+#if(1)  //----------------------   S: Calibration
+    #define Maximum_Number_Of_VI                    44
+    #define Opto_Hall_Number_Of_Channel             16
+    #define Opto_Hall_Number_Of_Row                 200
+    #define ResistorsCalibration_Number_Of_Channel  17
+    #define ResistorsCalibration_Number_Of_Row      4
+    #define LEDsCalibration_Number_Of_Channel       6
+    #define LEDsCalibration_Number_Of_Row           1
+
+    typedef enum {
+        Opto_Hall_Column_I_1=0,
+        Opto_Hall_Column_Vinput_1,
+        Opto_Hall_Column_VP_1,
+        Opto_Hall_Column_VN_1,
+        Opto_Hall_Column_IP_1,
+        Opto_Hall_Column_IN_1,
+        Opto_Hall_Column_IV_1,
+        Opto_Hall_Column_II_1,
+
+        Opto_Hall_Column_I_2,
+        Opto_Hall_Column_Vinput_2,
+        Opto_Hall_Column_VP_2,
+        Opto_Hall_Column_VN_2,
+        Opto_Hall_Column_IP_2,
+        Opto_Hall_Column_IN_2,
+        Opto_Hall_Column_IV_2,
+        Opto_Hall_Column_II_2,
+    } Opto_Hall_Column;
+    typedef enum { // ---------- WriteMode -------------------------------
+        WriteMode_All=0,
+        WriteMode_OnlyIPConfigWithSerial,
+        WriteMode_OnlyIPConfigWithoutSerial,
+        WriteMode_OnlyCalibration,
+        WriteMode_Serial,
+        WriteMode_ClockCalibration,
+        WriteMode_IP,
+        WriteMode_Port,
+        WriteMode_MinVersion,
+        WriteMode_MAC,
+        WriteMode_Analog_Output_DAs_Main,
+        WriteMode_Analog_Output_ADs_Main,
+        WriteMode_Analog_Output_DAs_Cross,
+        WriteMode_Analog_Output_ADs_Cross,
+        WriteMode_Binary_Input,
+        WriteMode_Analog_Input,
+        WriteMode_Binary_Output,
+        WriteMode_Opto_Hall,
+        WriteMode_Analog_Output_ADs_AC_Main,
+        WriteMode_Analog_Output_ADs_AC_Cross,
+        WriteMode_ResistorsCalibration,
+        WriteMode_LEDsCalibration,
+        WriteMode_Analog_Output_Shunt,
+        WriteMode_Calibrate_Time_VA1_With_GPS,
+        WriteMode_ExclusionSerial,
+        WriteMode_FRA,
+    } WriteMode;
+
+    void EEPROMReadConfig(void);
+    void EEPROMWriteConfig(WriteMode write_Mode, uint8_t doReset);
+
+#endif  //----------------------   E: Calibration
+#if(1)  //----------------------   S: Interrupt
+    XScuGic IntcInstancePtr;
+    XScuGic_Config *IntcConfig;
+
+    typedef enum IRQn{
+      Reset_IRQn                    = -15,
+      NonMaskableInt_IRQn           = -14,
+      HardFault_IRQn                = -13,
+      MemoryManagement_IRQn         = -12,
+      BusFault_IRQn                 = -11,
+      UsageFault_IRQn               = -10,
+      SVCall_IRQn                   = -5,
+      DebugMonitor_IRQn             = -4,
+      PendSV_IRQn                   = -2,
+      SysTick_IRQn                  = -1,
+      WDT_IRQn                      = 0,
+      TIMER0_IRQn                   = 1,
+      TIMER1_IRQn                   = 2,
+      TIMER2_IRQn                   = 3,
+      TIMER3_IRQn                   = 4,
+      UART0_IRQn                    = 5,
+      UART1_IRQn                    = 6,
+      UART2_IRQn                    = 7,
+      UART3_IRQn                    = 8,
+      PWM1_IRQn                     = 9,
+      I2C0_IRQn                     = 10,
+      I2C1_IRQn                     = 11,
+      I2C2_IRQn                     = 12,
+      Reserved0_IRQn                = 13,
+      SSP0_IRQn                     = 14,
+      SSP1_IRQn                     = 15,
+      PLL0_IRQn                     = 16,
+      RTC_IRQn                      = 17,
+      EINT0_IRQn                    = 18,
+      EINT1_IRQn                    = 19,
+      EINT2_IRQn                    = 20,
+      EINT3_IRQn                    = 21,
+      ADC_IRQn                      = 22,
+      BOD_IRQn                      = 23,
+      USB_IRQn                      = 24,
+      CAN_IRQn                      = 25,
+      DMA_IRQn                      = 26,
+      I2S_IRQn                      = 27,
+      ENET_IRQn                     = 28,
+      MCI_IRQn                      = 29,
+      MCPWM_IRQn                    = 30,
+      QEI_IRQn                      = 31,
+      PLL1_IRQn                     = 32,
+      USBActivity_IRQn              = 33,
+      CANActivity_IRQn              = 34,
+      UART4_IRQn                    = 35,
+      SSP2_IRQn                     = 36,
+      LCD_IRQn                      = 37,
+      GPIO_IRQn                     = 38,
+      PWM0_IRQn                     = 39,
+      EEPROM_IRQn                   = 40,
+    } IRQn_Type;
+
+    #define XPAR_FABRIC_TESTER_HP_0_INTERRUPT_12_5us_VEC_ID                     XPS_FPGA0_INT_ID
+    #define SLCR_LOCK_ADDRESS                                                   0x00000004
+    #define SLCR_UNLOCK_ADDRESS                                                 0x00000008
+    #define SLCR_LOCK_KEY                                                       0x767B
+    #define SLCR_UNLOCK_KEY                                                     0xDF0D
+
+    #define SLCR_SYSTEM_RESET                                                   0x00000200
+    #define SLCR_A9_CPU_RST_CTRL                                                0x00000244
+    #define SLCR_RS_AWDT_CTRL                                                   0x0000024C
+
+    uint32_t                    prio;
+    uint32_t                   IntrMask;
+
+
+    void                       NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority);
+    void                       NVIC_SystemReset(void);
+    void                       NVIC_Init();
+    void                       NVIC_EnableIRQ(IRQn_Type IRQn);
+
+    void                       SV_IRQHandler(void *CallBackRef);
+    void                       TIMER0_IRQHandler(void *CallBackRef);
+    void                       TIMER2_IRQHandler(void *CallBackRef);
+    void                       UART1_IRQHandler(void *CallBackRef, u32 Event, unsigned int EventData);
+    void                       UART2_IRQHandler(void *CallBackRef, u32 Event, unsigned int EventData);
+#endif  //----------------------   E: Interrupt
+#if(1)  //----------------------   S: USB
+    XUsbPs USB_PS;
+    XUsbPs_Config *USB_Config;
+#endif  //----------------------   E: USB
+#if(1)  //----------------------   S: UART
+    typedef enum
+    {
+        UART_0 = 0,
+        UART_1,
+        UART_2,
+        UART_3,
+        UART_4,
+    } UART_ID_Type;
+
+    XUartPs Uart_PS;
+    XUartPs Uart_PS0;
+    u8 UART_RecvBuffer;
+    XUartPs_Config *Uart_Config;
+    XUartPs_Config *Uart_Config0;
+    XUartPsFormat  Glb_UARTConfigStruct;
+
+    uint32_t                   Flag_255_First_Bytes;
+    uint8_t                    Flag_Send_and_Recive_Serial;
+    uint8_t                    UART0_Init_Var;
+    uint8_t                    UART2_Init_Var;
+    uint32_t                   CntrlRegister;
+    int32_t                    Counter_Send_and_Recive_Serial_For_Disconnect;
+    int32_t                    Counter_For_Finding_Problem;
+    int32_t                    Recive_Serial_Data_Len_In_Partial;
+    int32_t                    Recive_Serial_Data_Len_In_Partial_Now;
+
+    void                       UART_Init(UART_ID_Type UartID, XUartPsFormat *UART_ConfigStruct);
+    void                       UART_Init_Parameters(UART_ID_Type UartID, uint32_t BaudRate, uint8_t FORMAT_BITS, uint8_t FORMAT_PARITY, uint8_t FORMAT_STOP_BIT);
+    void                       Couter_Serial_Disconnect(void);
+#endif  //----------------------   E: UART
+#if(1)  //----------------------   S: Timer
+    #define LPC_TIM3              3
+    #define LPC_TIM2              2
+    #define LPC_TIM1              1
+    #define LPC_TIM0              0
+
+    XTtcPs_Config *Config;
+    XTtcPs TtcPsInst[4];
+    XTtcPs *TTC0;
+    XTtcPs *TTC1;
+    XTtcPs *TTC2;
+    XTtcPs *TTC3;
+
+    typedef struct {
+        u32 OutputHz;        /* Output frequency */
+        XInterval Interval;    /* Interval value */
+        u8 Prescaler;        /* Prescaler value */
+        u16 Options;    /* Option settings */
+    } TmrCntrSetup;
+
+    TmrCntrSetup TimerSetup;
+
+    void                       TIM_Cmd(uint8_t TImx, FunctionalState NewState);
+    void                       TIM_Init(uint8_t TImx);
+    void                       TIM_ResetCounter(uint8_t TImx);
+#endif  //----------------------   S: Timer
+#if(1)  //----------------------   S: LAN
+
+    #define ETH_LINK_DETECT_INTERVAL 4
+    #define SendLan_Len           (1450*38)
+    #define RecieveLan_Len        1450
+
+    err_t err;
+    err_t err_ntp_client;
+
+    struct tcp_pcb *pcb;
+    struct netif *echo_netif;
+    struct netif server_netif;
+    typedef struct {
+        uint32_t                         ulDataLen_Number_Of_byte;            /**< Data length */
+        uint8_t                          *pbDataBuf;                          /**< A word-align data pointer to data buffer */
+    } EMAC_PACKETBUF_Type;
+    EMAC_PACKETBUF_Type DataPacket;
+
+    uint32_t                             xemacpsif_addr;
+    uint32_t                             ReciveAckForLargData;
+    int32_t                              Send_1s_For_Stay_Connect;
+    u8                                   socket_tcp;
+    uint8_t                              SendIsOK;
+    uint8_t                              receiveLAN[RecieveLan_Len+8];
+    uint8_t                              tempReceivePacket[RecieveLan_Len+8];
+    uint8_t                              sendLAN[SendLan_Len+8];
+    uint32_t                             LAN_Counter_Disconnect;
+    uint32_t                             LAN_Connected;
+    uint32_t                             NumberOfByteRecieve;
+
+    struct netif *echo_netif;
+    volatile int               TcpFastTmrFlag;
+    volatile int               TcpSlowTmrFlag;
+    struct                     tcp_pcb *pcb;
+    struct netif               *echo_netif;
+
+    uint8_t                    tcp_get_state(uint8_t socket_tcp);
+    int                        send_data (uint8_t *data, u16 length);
+    void                       Ethernet_Init(void);
+    void                       timer_callback ();
+    void                       tcp_fasttmr(void);
+    void                       tcp_slowtmr(void);
+#endif  //----------------------   E: LAN
+#if(1)  //----------------------   S: Emac
+    #define   TX_PACKET_SIZE                          47
+    #define Maximum_Number_Of_Emac_Queue_ForSend      200
+
+    typedef struct { // ---------- Send_Emac_Packet ----------------------
+        uint8_t                    Data[10000];
+        int16_t                    Length;
+    } Send_Emac_Packet;
+    typedef struct { // ---------- Queue_Send_Emac -----------------------
+        Send_Emac_Packet           Packet[Maximum_Number_Of_Emac_Queue_ForSend];
+        int32_t                    Front;
+        int32_t                    Rear;
+    } Queue_Send_Emac;
+
+    Queue_Send_Emac            Glb_Queue_Send_AvailableDevice;
+
+    uint8_t                    GooseData[1000000];
+    char                       SerialEmacTxtBuff[1000];
+	
+    void                       EMAC_printf (char *txtBuff, const char *format, ...);
+    void                       EMAC_WritePacketBuffer(EMAC_PACKETBUF_Type *pDataStruct);
+    int8_t                     EmacIsRelease(void);
+    uint32_t                   crc32_bfr(void *pBfr, uint32_t size);
+    void                       SendIpAddress();
+    void                       DoWorkForGoose(struct pbuf *p);
+    void                       ChangeIPConfigByGoos(uint8_t *dp, uint32_t count);
+    extern void                ChangeBinaryInputsByGoose(uint8_t *dp, uint16_t LengthOfPacket, uint16_t dp12or16);
+#endif  //----------------------   E: Emac
+#if(1)  //----------------------   S: eMMC
+
+    #define STA_NOINIT             0x01U /* Drive not initialized */
+    #define STA_NODISK             0x02U /* No medium in the drive */
+    #define STA_PROTECT            0x04U /* Write protected */
+    #define CTRL_SYNC              0U    /* Flush disk cache (for write functions) */
+    #define GET_SECTOR_COUNT       1U    /* Get media size (for only f_mkfs()) */
+    #define GET_SECTOR_SIZE        2U    /* Get sector size (for multiple sector size (_MAX_SS >= 1024)) */
+    #define GET_BLOCK_SIZE         3U    /* Get erase block size (for only f_mkfs()) */
+    #define CTRL_ERASE_SECTOR      4U    /* Force erased a block of sectors (for only _USE_ERASE) */
+    #define CTRL_POWER             5U    /* Get/Set power status */
+    #define CTRL_LOCK              6U    /* Lock/Unlock media removal */
+    #define CTRL_EJECT             7U    /* Eject media */
+    #define CTRL_FORMAT            8U    /* Create physical format on the media */
+    #define MMC_GET_TYPE           10U    /* Get card type */
+    #define MMC_GET_CSD            11U    /* Get CSD */
+    #define MMC_GET_CID            12U    /* Get CID */
+    #define MMC_GET_OCR            13U    /* Get OCR */
+    #define MMC_GET_SDSTAT         14U    /* Get SD status */
+    #define ATA_GET_REV            20U    /* Get F/W revision */
+    #define ATA_GET_MODEL          21U    /* Get model name */
+    #define ATA_GET_SN             22U    /* Get serial number */
+    #define SD_CD_DELAY            10000U
+    #define EMMC_SECTOR_SIZE       0x200
+
+    typedef enum {
+        RES_OK = 0,        /* 0: Successful */
+        RES_ERROR,         /* 1: R/W Error */
+        RES_WRPRT,         /* 2: Write Protected */
+        RES_NOTRDY,        /* 3: Not Ready */
+        RES_PARERR         /* 4: Invalid Parameter */
+    } DRESULT;
+    typedef BYTE                   DSTATUS;
+
+    uint8_t Flag_WriteMode_OnlyIPConfigWithoutSerial_For_Goose_Because_In_Goose_System_Reset;
+
+    DSTATUS disk_initialize (BYTE pdrv);
+    DSTATUS disk_status (BYTE pdrv);
+    DRESULT disk_read (BYTE pdrv, BYTE* buff, DWORD sector, UINT count);
+    DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
+    DRESULT disk_write (BYTE pdrv, BYTE* buff, DWORD sector, UINT count);
+    void read_from_MMC(uint8_t *Pdata, uint32_t blockNum, uint32_t numOfBlock);
+    void Write_to_MMC(uint8_t *Pdata, uint32_t blockNum, uint32_t numOfBlock);
+    void Onboard_eMMC_Init(void);
+    void EEPROM_Init(void);
+#endif  //----------------------   E: eMMC
+#if(1)  //----------------------   S: Flash
+    #define WRITE_STATUS_CMD            0x01
+    #define WRITE_CMD                   0x02
+    #define READ_CMD                    0x03
+    #define WRITE_DISABLE_CMD           0x04
+    #define READ_STATUS_CMD             0x05
+    #define WRITE_ENABLE_CMD            0x06
+    #define FAST_READ_CMD               0x0B
+    #define DUAL_READ_CMD               0x3B
+    #define QUAD_READ_CMD               0x6B
+    #define BULK_ERASE_CMD              0xC7
+    #define SEC_ERASE_CMD               0xD8
+    #define READ_ID                     0x9F
+    #define COMMAND_OFFSET              0
+    #define ADDRESS_1_OFFSET            1
+    #define ADDRESS_2_OFFSET            2
+    #define ADDRESS_3_OFFSET            3
+    #define DATA_OFFSET                 4
+    #define DUMMY_OFFSET                4
+    #define DUMMY_SIZE                  1
+    #define RD_ID_SIZE                  4
+    #define BULK_ERASE_SIZE             1
+    #define SEC_ERASE_SIZE              4
+    #define OVERHEAD_SIZE               4
+    #define SECTOR_SIZE                 0x10000
+    #define SECTOR_NUM                  0x200
+    #define PAGE_SIZE                   0x100
+    #define PAGE_NUM_IN_SECTOR          0x100
+    #define Start_Sector_Calibration    (SECTOR_NUM-0x40)
+    #define SPANTION_TYPE               0x01
+    #define WINBOND_TYPE                0xEF
+    #define MICRON_TYPE                 0x20
+
+    typedef enum{
+    MODE_8_BIT = 0,
+    MODE_16_BIT,
+    MODE_32_BIT,
+    MODE_64_BIT
+    } EEPROM_Mode_Type;
+    typedef enum {
+        XST_OK = (uint8_t)0x00, XST_ERROR = (uint8_t)0x01, XST_BUSY = (uint8_t)0x02, XST_TIMEOUT = (uint8_t)0x03, XST_UNKNOWN = (uint8_t)0x04
+    } XST_StatusTypeDef;
+    typedef struct {
+        uint8_t                    startData;
+        int32_t                    Thermal_Board_Controller[Number_Of_VI];
+
+        uint32_t                   Serial;
+        uint32_t                   ClockCalibration;
+        uint8_t                    IPConfig[16];
+        uint16_t                   Port;
+        uint32_t                   MinVersion;
+        uint8_t                    MAC[6];
+        int32_t                    Analog_Output_DAs_Main_AddValue_Average[Number_Of_VI];
+        int32_t                    Analog_Output_DAs_Main_AddValue[Number_Of_VI];
+        int32_t                    Analog_Output_DAs_Main[4 * Number_Of_VI];
+        int32_t                    Analog_Output_DAs_Cros[4 * Number_Of_VI];
+        int32_t                    Analog_Output_ADs_DC_Main[4 * Number_Of_VI];
+        int32_t                    Analog_Output_ADs_DC_Cros[4 * Number_Of_VI];
+        int32_t                    Binary_Input[126];
+        int32_t                    Analog_Input[72];
+        int32_t                    BinaryOutput[32];
+        int32_t                    Analog_Output_ADs_AC_Cros[2 * Number_Of_VI];
+        int32_t                    Analog_Output_ADs_AC_Main[2 * Number_Of_VI];
+        int32_t                    Analog_Output_Shunt[Number_Of_VI];
+        int32_t                    Opto_Hall_Calibration[Opto_Hall_Number_Of_Channel];
+        int32_t                    Resistors_Calibration[ResistorsCalibration_Number_Of_Channel * ResistorsCalibration_Number_Of_Row];
+        uint8_t                    LEDs_Calibration[LEDsCalibration_Number_Of_Channel * LEDsCalibration_Number_Of_Row];
+        double                     AV_Phi_Freq_Gain_Calibration_Box[FRA_Number_Of_Gain][FRA_Number_Of_Frequncy][AV_Phi], AV_Phi_Freq_Gain_Calibration_FRA[FRA_Number_Of_Gain][FRA_Number_Of_Frequncy][AV_Phi];
+        double                     AV_Freq_Gain_Calibration[FRA_Number_Of_Gain*FRA_Number_Of_Frequncy];
+        double                     Phi_Freq_Gain_Calibration[FRA_Number_Of_Gain*FRA_Number_Of_Frequncy];
+
+        int32_t                    Calibrate_Time_VA1_With_GPS;
+        int32_t                    ExclusionSerial[16];
+    } DeviceCfg;
+
+    XQspiPs                             QspiInstance;
+    unsigned                            char FLASH_TYPE;
+    uint8_t                             ReadBuffer[SECTOR_SIZE + DATA_OFFSET];
+    uint8_t                             WriteBuffer[SECTOR_SIZE + DATA_OFFSET];
+    int32_t                             FlashIdNum;
+    uint8_t                             MMC_Flash_MMCOk1_MMChNotOk0;
+    uint8_t                             Adade_Khas_25_42_211_18[4];
+    uint8_t                             MMC_Flash_FlashOk1_FlashNotOk0;
+    uint8_t                             MMC_Flash_CompareOk1_CompareNotOk0;
+    uint8_t                             New_SSBL;
+
+    DeviceCfg                           ReadMyCfg, ReadMyCfg_Compare;
+
+    void                                Flash_Init(void);
+    void                                EEPROM1_Flash0_Write(uint16_t page_number, uint16_t sector_number, void* data_Write, EEPROM_Mode_Type mode, uint32_t count);
+    void                                EEPROM1_Flash0_Read(uint16_t page_number, uint16_t sector_number, void* data, EEPROM_Mode_Type mode, uint32_t count, uint8_t MMC_1_Flash_0);
+    void                                Flash_Erase(uint16_t sector_address);
+    u8                                  EraseSector(uint32_t start_sec, uint32_t end_sec);
+    void                                Init_MMC_Flash_Check_Validity_If_First_Write_To_Flash();
+
+#endif  //----------------------   E: Flash
+#if(1)  //----------------------   S: SPI
+    #define LPC_SSP0              0
+    #define LPC_SSP1              1
+    #define LPC_SSP2              2
+
+    void                       SSP_Init(uint8_t SSPx, uint32_t ClockRate);
+    uint16_t                   SSP_ReceiveData(uint8_t SSPx);
+    void                       SSP_SendData(uint8_t SSPx, uint16_t Data);
+    uint8_t                    IsBusy(uint8_t SSPx);
+#endif  //----------------------   E: SPI
+#if(1)  //----------------------   S: I2C
+    void                       I2C_Init();
+    void                       I2C_MasterTransferData(uint8_t tx_data_0, uint8_t tx_data_1, uint8_t address);
+#endif  //----------------------   E: I2C
+#if(1)  //----------------------   S: Watchdog
+    #define WDT_LOAD_VALUE     333334*1
+    #define EnableWDTY         1
+
+    uint32_t                   WDT_TIMEOUT;
+
+    XScuWdt                    Watchdog;
+    XScuWdt_Config             *WDT_ConfigPtr;
+
+    int8_t                     WWDT_Start(uint32_t TimeOut);
+    void                       WWDT_Feed (void);
+    void                       WWDT_FeedStdSeq (void);
+    void                       WDT_Init(void);
+#endif  //----------------------   E: Watchdog
+#if(1)  //----------------------   S: GPIO
+    #define IB1_Relay_PORTDIR                                        *(u32 *)0xE000A204
+    #define IB1_Relay_PORTDIREN                                      *(u32 *)0xE000A208
+    #define IB1_Relay_PORT                                           *(u32 *)0xE000A000
+    #define IB1_Relay_PIN                                            8
+    #define ClrIB1_Relay_PIN                                         0xFEFF0000
+    #define SetIB1_Relay_PIN                                         0xFEFF0100
+    #define IB1_Relay_PORTPIN                                        *(u32 *)0xE000A060
+
+    #define IB3_Relay_PORTDIR                                        *(u32 *)0xE000A204
+    #define IB3_Relay_PORTDIREN                                      *(u32 *)0xE000A208
+    #define IB3_Relay_PORT                                           *(u32 *)0xE000A000
+    #define IB3_Relay_PIN                                            9
+    #define ClrIB3_Relay_PIN                                         0xFDFF0000
+    #define SetIB3_Relay_PIN                                         0xFDFF0200
+    #define IB3_Relay_PORTPIN                                        *(u32 *)0xE000A060
+
+    #define IB1_Relay_OUTPUT                                         (IB1_Relay_PORTDIR|=(1U<<IB1_Relay_PIN)); (IB1_Relay_PORTDIREN|=(1U<<IB1_Relay_PIN))
+    #define IB1_Relay_SET                                            (IB1_Relay_PORT=(SetIB1_Relay_PIN)); IB1_Read_Komak_Because_Read_Has_Problem=1;
+    #define IB1_Relay_CLR                                            (IB1_Relay_PORT=(ClrIB1_Relay_PIN)); IB1_Read_Komak_Because_Read_Has_Problem=0;
+    #define IB1_Relay_READ                                           IB1_Read_Komak_Because_Read_Has_Problem
+
+    #define IB3_Relay_OUTPUT                                         IB3_Relay_CLR; (IB3_Relay_PORTDIR|=(1U<<IB3_Relay_PIN)); (IB3_Relay_PORTDIREN|=(1U<<IB3_Relay_PIN)); IB3_Relay_CLR;
+    #define IB3_Relay_SET                                            (IB3_Relay_PORT=(SetIB3_Relay_PIN))
+    #define IB3_Relay_CLR                                            (IB3_Relay_PORT=(ClrIB3_Relay_PIN))
+    #define IB3_Relay_READ                                           ((IB3_Relay_PORTPIN>>IB3_Relay_PIN)&0x00000001)
+
+    #define for_panl_detc_1_PORTDIR                                  *(u32 *)0xE000A284 //54
+    #define for_panl_detc_1_PORTDIREN                                *(u32 *)0xE000A288
+    #define for_panl_detc_1_PORT                                     *(u32 *)0xE000A010
+    #define for_panl_detc_1_PIN                                      0
+    #define Clrfor_panl_detc_1_PIN                                   0xFFFE0000
+    #define Setfor_panl_detc_1_PIN                                   0xFFFE0001
+    #define for_panl_detc_1_PORTPIN                                  *(u32 *)0xE000A068
+
+    #define for_panl_detc_2_PORTDIR                                  *(u32 *)0xE000A284 //55
+    #define for_panl_detc_2_PORTDIREN                                *(u32 *)0xE000A288
+    #define for_panl_detc_2_PORT                                     *(u32 *)0xE000A010
+    #define for_panl_detc_2_PIN                                      1
+    #define Clrfor_panl_detc_2_PIN                                   0xFFFD0000
+    #define Setfor_panl_detc_2_PIN                                   0xFFFD0002
+    #define for_panl_detc_2_PORTPIN                                  *(u32 *)0xE000A068
+
+    #define I2C_SDA_PORTDIR                                          *(u32 *)0xE000A284 //57
+    #define I2C_SDA_PORTDIREN                                        *(u32 *)0xE000A288
+    #define I2C_SDA_PORT                                             *(u32 *)0xE000A010
+    #define I2C_SDA_PIN                                              3
+    #define ClrI2C_SDA_PIN                                           0xFFF70000
+    #define SetI2C_SDA_PIN                                           0xFFF70008
+    #define I2C_SDA_PORTPIN                                          *(u32 *)0xE000A068
+
+    #define I2C_SCL_PORTDIR                                          *(u32 *)0xE000A284 //58
+    #define I2C_SCL_PORTDIREN                                        *(u32 *)0xE000A288
+    #define I2C_SCL_PORT                                             *(u32 *)0xE000A010
+    #define I2C_SCL_PIN                                              4
+    #define ClrI2C_SCL_PIN                                           0xFFEF0000
+    #define SetI2C_SCL_PIN                                           0xFFEF0010
+    #define I2C_SCL_PORTPIN                                          *(u32 *)0xE000A068
+
+    #define for_panl_detc_1_OUTPUT                                   for_panl_detc_1_CLR; (for_panl_detc_1_PORTDIR|=(1U<<for_panl_detc_1_PIN)); (for_panl_detc_1_PORTDIREN|=(1U<<for_panl_detc_1_PIN)); for_panl_detc_1_CLR;
+    #define for_panl_detc_1_INPUT                                    (for_panl_detc_1_PORTDIR&=~(1U<<for_panl_detc_1_PIN))
+    #define for_panl_detc_1_READ                                     ((for_panl_detc_1_PORTPIN>>for_panl_detc_1_PIN)&0x00000001)
+    #define for_panl_detc_1_SET                                      (for_panl_detc_1_PORT=(Setfor_panl_detc_1_PIN))
+    #define for_panl_detc_1_CLR                                      (for_panl_detc_1_PORT=(Clrfor_panl_detc_1_PIN))
+
+    #define for_panl_detc_2_OUTPUT                                   for_panl_detc_2_CLR; (for_panl_detc_2_PORTDIR|=(1U<<for_panl_detc_2_PIN)); (for_panl_detc_2_PORTDIREN|=(1U<<for_panl_detc_2_PIN)); for_panl_detc_2_CLR;
+    #define for_panl_detc_2_INPUT                                    (for_panl_detc_2_PORTDIR&=~(1U<<for_panl_detc_2_PIN))
+    #define for_panl_detc_2_READ                                     ((for_panl_detc_2_PORTPIN>>for_panl_detc_2_PIN)&0x00000001)
+    #define for_panl_detc_2_SET                                      (for_panl_detc_2_PORT=(Setfor_panl_detc_2_PIN))
+    #define for_panl_detc_2_CLR                                      (for_panl_detc_2_PORT=(Clrfor_panl_detc_2_PIN))
+
+    #define I2C_SCL_OUTPUT                                           I2C_SCL_CLR; (I2C_SCL_PORTDIR|=(1U<<I2C_SCL_PIN)); (I2C_SCL_PORTDIREN|=(1U<<I2C_SCL_PIN)); I2C_SCL_CLR;
+    #define I2C_SCL_INPUT                                            (I2C_SCL_PORTDIR&=~(1U<<I2C_SCL_PIN))
+    #define I2C_SCL_READ                                             ((I2C_SCL_PORTPIN>>I2C_SCL_PIN)&0x00000001)
+    #define I2C_SCL_SET                                              (I2C_SCL_PORT=(SetI2C_SCL_PIN))
+    #define I2C_SCL_CLR                                              (I2C_SCL_PORT=(ClrI2C_SCL_PIN))
+
+    #define I2C_SDA_OUTPUT                                           I2C_SDA_CLR; (I2C_SDA_PORTDIR|=(1U<<I2C_SDA_PIN)); (I2C_SDA_PORTDIREN|=(1U<<I2C_SDA_PIN)); I2C_SDA_CLR;
+    #define I2C_SDA_INPUT                                            (I2C_SDA_PORTDIR&=~(1U<<I2C_SDA_PIN))
+    #define I2C_SDA_READ                                             ((I2C_SDA_PORTPIN>>I2C_SDA_PIN)&0x00000001)
+    #define I2C_SDA_SET                                              (I2C_SDA_PORT=(SetI2C_SDA_PIN))
+    #define I2C_SDA_CLR                                              (I2C_SDA_PORT=(ClrI2C_SDA_PIN))
+
+    #define Opto_VA2_OUTPUT                                          if(Main_Version<=1){Opto_VA1_OUTPUT } else{}
+    #define Opto_VB2_OUTPUT                                          if(Main_Version<=1){                } else{}
+    #define Opto_IA2_OUTPUT                                          if(Main_Version<=1){Opto_IA1_OUTPUT } else{}
+    #define Opto_IA3_OUTPUT                                          if(Main_Version<=1){Opto_IA1_OUTPUT } else{}
+    #define Opto_IB2_OUTPUT                                          if(Main_Version<=1){Opto_IB1_OUTPUT } else{}
+    #define Opto_IB3_OUTPUT                                          if(Main_Version<=1){Opto_IB1_OUTPUT } else{}
+    #define Opto_VA2_INPUT                                           if(Main_Version<=1){Opto_VA1_INPUT  } else{}
+    #define Opto_VB2_INPUT                                           if(Main_Version<=1){                } else{}
+    #define Opto_IA2_INPUT                                           if(Main_Version<=1){Opto_IA1_INPUT  } else{}
+    #define Opto_IA3_INPUT                                           if(Main_Version<=1){Opto_IA1_INPUT  } else{}
+    #define Opto_IB2_INPUT                                           if(Main_Version<=1){Opto_IB1_INPUT  } else{}
+    #define Opto_IB3_INPUT                                           if(Main_Version<=1){Opto_IB1_INPUT  } else{}
+    #define Opto_VA2_CLR                                             if(Main_Version<=1){Opto_VA1_CLR    } else{Main_IP_GPIO_SV[501]=0;}
+    #define Opto_VB2_CLR                                             if(Main_Version<=1){                } else{Main_IP_GPIO_SV[502]=0;}
+    #define Opto_IA2_CLR                                             if(Main_Version<=1){Opto_IA1_CLR    } else{Main_IP_GPIO_SV[503]=0;}
+    #define Opto_IA3_CLR                                             if(Main_Version<=1){Opto_IA1_CLR    } else{Main_IP_GPIO_SV[504]=0;}
+    #define Opto_IB2_CLR                                             if(Main_Version<=1){Opto_IB1_CLR    } else{Main_IP_GPIO_SV[505]=0;}
+    #define Opto_IB3_CLR                                             if(Main_Version<=1){Opto_IB1_CLR    } else{Main_IP_GPIO_SV[506]=0;}
+    #define Opto_VA2_SET                                             if(Main_Version<=1){Opto_VA1_SET    } else{Main_IP_GPIO_SV[501]=1;}
+    #define Opto_VB2_SET                                             if(Main_Version<=1){                } else{Main_IP_GPIO_SV[502]=1;}
+    #define Opto_IA2_SET                                             if(Main_Version<=1){Opto_IA1_SET    } else{Main_IP_GPIO_SV[503]=1;}
+    #define Opto_IA3_SET                                             if(Main_Version<=1){Opto_IA1_SET    } else{Main_IP_GPIO_SV[504]=1;}
+    #define Opto_IB2_SET                                             if(Main_Version<=1){Opto_IB1_SET    } else{Main_IP_GPIO_SV[505]=1;}
+    #define Opto_IB3_SET                                             if(Main_Version<=1){Opto_IB1_SET    } else{Main_IP_GPIO_SV[506]=1;}
+    #define Opto_VA2_READ                                            (Main_Version<=1? Opto_VA1_READ:     Main_IP_GPIO_SV[501])
+    #define Opto_VB2_READ                                            (Main_Version<=1? 0            :     Main_IP_GPIO_SV[502])
+    #define Opto_IA2_READ                                            (Main_Version<=1? Opto_IA1_READ:     Main_IP_GPIO_SV[503])
+    #define Opto_IA3_READ                                            (Main_Version<=1? Opto_IA1_READ:     Main_IP_GPIO_SV[504])
+    #define Opto_IB2_READ                                            (Main_Version<=1? Opto_IB1_READ:     Main_IP_GPIO_SV[505])
+    #define Opto_IB3_READ                                            (Main_Version<=1? Opto_IB1_READ:     Main_IP_GPIO_SV[506])
+
+    #define CS_AD_VB2_SET                                            ;
+    #define CS_AD_VB2_CLR                                            ;
+
+    #define Ethernet_VCC_ON                                          Ethernet_VCC_SET
+    #define Ethernet_VCC_OFF                                         Ethernet_VCC_CLR
+
+    #define  Current_Protection_Board1_INPUT                         ;
+    #define  Current_Protection_Board1_READ                          ((AssignFromSV_Single_data(W_I_GPIO_Input_Final)>>0) & 1U)
+
+    #define  Current_Protection_Board2_INPUT                         ;
+    #define  Current_Protection_Board2_READ                          ((AssignFromSV_Single_data(W_I_GPIO_Input_Final)>>1) & 1U)
+
+    #define  Earth_Connection_Board2_INPUT                           ;
+    #define  Earth_Connection_Board2_READ                            ((AssignFromSV_Single_data(W_I_GPIO_Input_Final)>>2) & 1U)
+
+    #define  CS_AD_IA2_OUTPUT                                        ;
+    #define  CS_AD_IA2_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[100]=1; Set_Main_IP(slv_reg100, 1);}
+    #define  CS_AD_IA2_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[100]=0; Set_Main_IP(slv_reg100, 0);}
+
+    #define  Nutric_OUTPUT                                           ;
+    #define  Nutric_SET                                              Main_IP_GPIO_SV[101]=1; if(Main_Version<=1){Set_Main_IP(slv_reg101, 1);}
+    #define  Nutric_CLR                                              Main_IP_GPIO_SV[101]=0; if(Main_Version<=1){Set_Main_IP(slv_reg101, 0);}
+    #define  Nutric_READ                                             (Main_IP_GPIO_SV[101])
+
+    #define  CS_AD_VA1_OUTPUT                                        ;
+    #define  CS_AD_VA1_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[102]=1; Set_Main_IP(slv_reg102, 1);}
+    #define  CS_AD_VA1_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[102]=0; Set_Main_IP(slv_reg102, 0);}
+
+    #define  CS_AD_VA2_OUTPUT                                        ;
+    #define  CS_AD_VA2_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[103]=1; Set_Main_IP(slv_reg103, 1);}
+    #define  CS_AD_VA2_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[103]=0; Set_Main_IP(slv_reg103, 0);}
+
+    #define  CS_AD_VA3_OUTPUT                                        ;
+    #define  CS_AD_VA3_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[104]=1; Set_Main_IP(slv_reg104, 1);}
+    #define  CS_AD_VA3_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[104]=0; Set_Main_IP(slv_reg104, 0);}
+
+    #define  CS_AD_VB1_OUTPUT                                        ;
+    #define  CS_AD_VB1_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[105]=1; Set_Main_IP(slv_reg105, 1);}
+    #define  CS_AD_VB1_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[105]=0; Set_Main_IP(slv_reg105, 0);}
+
+    #define  CS_AD_VB3_OUTPUT                                        ;
+    #define  CS_AD_VB3_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[106]=1; Set_Main_IP(slv_reg106, 1);}
+    #define  CS_AD_VB3_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[106]=0; Set_Main_IP(slv_reg106, 0);}
+
+    #define  CS_AD_IA1_OUTPUT                                        ;
+    #define  CS_AD_IA1_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[107]=1; Set_Main_IP(slv_reg107, 1);}
+    #define  CS_AD_IA1_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[107]=0; Set_Main_IP(slv_reg107, 0);}
+
+    #define  CS_AD_IA3_OUTPUT                                        ;
+    #define  CS_AD_IA3_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[108]=1; Set_Main_IP(slv_reg108, 1);}
+    #define  CS_AD_IA3_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[108]=0; Set_Main_IP(slv_reg108, 0);}
+
+    #define  CS_AD_IB1_OUTPUT                                        ;
+    #define  CS_AD_IB1_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[109]=1; Set_Main_IP(slv_reg109, 1);}
+    #define  CS_AD_IB1_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[109]=0; Set_Main_IP(slv_reg109, 0);}
+
+    #define  CS_AD_IB2_OUTPUT                                        ;
+    #define  CS_AD_IB2_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[110]=1; Set_Main_IP(slv_reg110, 1);}
+    #define  CS_AD_IB2_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[110]=0; Set_Main_IP(slv_reg110, 0);}
+
+    #define  CS_AD_IB3_OUTPUT                                        ;
+    #define  CS_AD_IB3_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[111]=1; Set_Main_IP(slv_reg111, 1);}
+    #define  CS_AD_IB3_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[111]=0; Set_Main_IP(slv_reg111, 0);}
+
+    #define  Enable_CLK_3_OUTPUT                                     ;
+    #define  Enable_CLK_3_SET                                        if(Main_Version<=1){Main_IP_GPIO_SV[112]=1; Set_Main_IP(slv_reg112, 1);}
+    #define  Enable_CLK_3_CLR                                        if(Main_Version<=1){Main_IP_GPIO_SV[112]=0; Set_Main_IP(slv_reg112, 0);}
+
+    #define  Enable_CLK_4_OUTPUT                                     ;
+    #define  Enable_CLK_4_SET                                        if(Main_Version<=1){Main_IP_GPIO_SV[113]=1; Set_Main_IP(slv_reg113, 1);}
+    #define  Enable_CLK_4_CLR                                        if(Main_Version<=1){Main_IP_GPIO_SV[113]=0; Set_Main_IP(slv_reg113, 0);}
+
+    #define  LDAC_OUTPUT                                             ;
+    #define  LDAC_SET                                                if(Main_Version<=1){Main_IP_GPIO_SV[114]=1; Set_Main_IP(slv_reg114, 1);}
+    #define  LDAC_CLR                                                if(Main_Version<=1){Main_IP_GPIO_SV[114]=0; Set_Main_IP(slv_reg114, 0);}
+
+    #define  CS_DA_VA1_OUTPUT                                        ;
+    #define  CS_DA_VA1_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[115]=1; Set_Main_IP(slv_reg115, 1);}
+    #define  CS_DA_VA1_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[115]=0; Set_Main_IP(slv_reg115, 0);}
+
+    #define  CS_DA_VA2_OUTPUT                                        ;
+    #define  CS_DA_VA2_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[116]=1; Set_Main_IP(slv_reg116, 1);}
+    #define  CS_DA_VA2_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[116]=0; Set_Main_IP(slv_reg116, 0);}
+
+    #define  CS_DA_VA3_OUTPUT                                        ;
+    #define  CS_DA_VA3_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[117]=1; Set_Main_IP(slv_reg117, 1);}
+    #define  CS_DA_VA3_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[117]=0; Set_Main_IP(slv_reg117, 0);}
+
+    #define  CS_DA_VB1_OUTPUT                                        ;
+    #define  CS_DA_VB1_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[118]=1; Set_Main_IP(slv_reg118, 1);}
+    #define  CS_DA_VB1_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[118]=0; Set_Main_IP(slv_reg118, 0);}
+
+    #define  CS_DA_VB2_OUTPUT                                        ;
+    #define  CS_DA_VB2_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[119]=1; Set_Main_IP(slv_reg119, 1);}
+    #define  CS_DA_VB2_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[119]=0; Set_Main_IP(slv_reg119, 0);}
+
+
+    #define  CS_DA_VB3_OUTPUT                                        ;
+    #define  CS_DA_VB3_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[120]=1; Set_Main_IP(slv_reg120, 1);}
+    #define  CS_DA_VB3_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[120]=0; Set_Main_IP(slv_reg120, 0);}
+
+    #define  Opto_VA1_OUTPUT                                         ;
+    #define  Opto_VA1_SET                                            Main_IP_GPIO_SV[121]=1; if(Main_Version<=1){Set_Main_IP(slv_reg121, 1);}
+    #define  Opto_VA1_CLR                                            Main_IP_GPIO_SV[121]=0; if(Main_Version<=1){Set_Main_IP(slv_reg121, 0);}
+    #define  Opto_VA1_READ                                           (Main_IP_GPIO_SV[121])
+
+    #define  Binary_Output03_OUTPUT                                  ;
+    #define  Binary_Output03_SET                                     Main_IP_GPIO_SV[122]=1; if(Main_Version<=1){Set_Main_IP(slv_reg122, 1);}
+    #define  Binary_Output03_CLR                                     Main_IP_GPIO_SV[122]=0; if(Main_Version<=1){Set_Main_IP(slv_reg122, 0);}
+    #define  Binary_Output03_READ                                    (Main_IP_GPIO_SV[122])
+
+    #define  VA1_Relay_OUTPUT                                        ;
+    #define  VA1_Relay_SET                                           Main_IP_GPIO_SV[123]=1; if(Main_Version<=1){Set_Main_IP(slv_reg123, 1);}
+    #define  VA1_Relay_CLR                                           Main_IP_GPIO_SV[123]=0; if(Main_Version<=1){Set_Main_IP(slv_reg123, 0);}
+    #define  VA1_Relay_READ                                          (Main_IP_GPIO_SV[123])
+
+    #define  VA2_Relay_OUTPUT                                        ;
+    #define  VA2_Relay_SET                                           Main_IP_GPIO_SV[124]=1; if(Main_Version<=1){Set_Main_IP(slv_reg124, 1);}
+    #define  VA2_Relay_CLR                                           Main_IP_GPIO_SV[124]=0; if(Main_Version<=1){Set_Main_IP(slv_reg124, 0);}
+    #define  VA2_Relay_READ                                          (Main_IP_GPIO_SV[124])
+
+    #define  Opto_VA3_OUTPUT                                         ;
+    #define  Opto_VA3_SET                                            Main_IP_GPIO_SV[125]=1; if(Main_Version<=1){Set_Main_IP(slv_reg125, 1);}
+    #define  Opto_VA3_CLR                                            Main_IP_GPIO_SV[125]=0; if(Main_Version<=1){Set_Main_IP(slv_reg125, 0);}
+    #define  Opto_VA3_READ                                           (Main_IP_GPIO_SV[125])
+
+    #define  Binary_Output04_OUTPUT                                  ;
+    #define  Binary_Output04_SET                                     Main_IP_GPIO_SV[126]=1; if(Main_Version<=1){Set_Main_IP(slv_reg126, 1);}
+    #define  Binary_Output04_CLR                                     Main_IP_GPIO_SV[126]=0; if(Main_Version<=1){Set_Main_IP(slv_reg126, 0);}
+    #define  Binary_Output04_READ                                    (Main_IP_GPIO_SV[126])
+
+    #define  Binary_Output02_OUTPUT                                  ;
+    #define  Binary_Output02_SET                                     Main_IP_GPIO_SV[127]=1; if(Main_Version<=1){Set_Main_IP(slv_reg127, 1);}
+    #define  Binary_Output02_CLR                                     Main_IP_GPIO_SV[127]=0; if(Main_Version<=1){Set_Main_IP(slv_reg127, 0);}
+    #define  Binary_Output02_READ                                    (Main_IP_GPIO_SV[127])
+
+    #define  Binary_Output01_OUTPUT                                  ;
+    #define  Binary_Output01_SET                                     Main_IP_GPIO_SV[128]=1; if(Main_Version<=1){Set_Main_IP(slv_reg128, 1);}
+    #define  Binary_Output01_CLR                                     Main_IP_GPIO_SV[128]=0; if(Main_Version<=1){Set_Main_IP(slv_reg128, 0);}
+    #define  Binary_Output01_READ                                    (Main_IP_GPIO_SV[128])
+
+    #define  Error_OUTPUT                                            ;
+    #define  Error_SET                                               Main_IP_GPIO_SV[129]=1; if(Main_Version<=1){Set_Main_IP(slv_reg129, 1);}
+    #define  Error_CLR                                               Main_IP_GPIO_SV[129]=0; if(Main_Version<=1){Set_Main_IP(slv_reg129, 0);}
+    #define  Error_READ                                              (Main_IP_GPIO_SV[129])
+
+    #define  Connected_OUTPUT                                        ;
+    #define  Connected_SET                                           Main_IP_GPIO_SV[130]=1; if(Main_Version<=1){Set_Main_IP(slv_reg130, 1);}
+    #define  Connected_CLR                                           Main_IP_GPIO_SV[130]=0; if(Main_Version<=1){Set_Main_IP(slv_reg130, 0);}
+    #define  Connected_READ                                          (Main_IP_GPIO_SV[130])
+
+    #define  Enable_CLK_0_OUTPUT                                     ;
+    #define  Enable_CLK_0_SET                                        if(Main_Version<=1){Main_IP_GPIO_SV[131]=1; Set_Main_IP(slv_reg131, 1);}
+    #define  Enable_CLK_0_CLR                                        if(Main_Version<=1){Main_IP_GPIO_SV[131]=0; Set_Main_IP(slv_reg131, 0);}
+
+    #define  CS_595_Enable_CLK_1_OUTPUT                              ;
+    #define  CS_595_Enable_CLK_1_SET                                 if(Main_Version<=1){Main_IP_GPIO_SV[132]=1; Set_Main_IP(slv_reg132, 1);}
+    #define  CS_595_Enable_CLK_1_CLR                                 if(Main_Version<=1){Main_IP_GPIO_SV[132]=(DisableAllLED==1?1:0); Set_Main_IP(slv_reg132, (DisableAllLED==1?1:0));}
+
+    #define  Enable_CLK_2_OUTPUT                                     ;
+    #define  Enable_CLK_2_SET                                        if(Main_Version<=1){Main_IP_GPIO_SV[133]=1; Set_Main_IP(slv_reg133, 1);}
+    #define  Enable_CLK_2_CLR                                        if(Main_Version<=1){Main_IP_GPIO_SV[133]=0; Set_Main_IP(slv_reg133, 0);}
+
+    #define  Switching_Relay_Board2_OUTPUT                           ;
+    #define  Switching_Relay_Board2_SET                              Main_IP_GPIO_SV[134]=1; Set_Main_IP(slv_reg134, 1);
+    #define  Switching_Relay_Board2_CLR                              Main_IP_GPIO_SV[134]=0; Set_Main_IP(slv_reg134, 0);
+    #define  Switching_Relay_Board2_READ                             (Main_IP_GPIO_SV[134])
+
+    #define  Opto_IB1_OUTPUT                                         ;
+    #define  Opto_IB1_SET                                            Main_IP_GPIO_SV[135]=1; if(Main_Version<=1){Set_Main_IP(slv_reg135, 1);}
+    #define  Opto_IB1_CLR                                            Main_IP_GPIO_SV[135]=0; if(Main_Version<=1){Set_Main_IP(slv_reg135, 0);}
+    #define  Opto_IB1_READ                                           (Main_IP_GPIO_SV[135])
+
+    #define  VB1_Relay_OUTPUT                                        ;
+    #define  VB1_Relay_SET                                           Main_IP_GPIO_SV[136]=1; if(Main_Version<=1){Set_Main_IP(slv_reg136, 1);}
+    #define  VB1_Relay_CLR                                           Main_IP_GPIO_SV[136]=0; if(Main_Version<=1){Set_Main_IP(slv_reg136, 0);}
+    #define  VB1_Relay_READ                                          (Main_IP_GPIO_SV[136])
+
+    #define  VB3_Relay_OUTPUT                                        ;
+    #define  VB3_Relay_SET                                           Main_IP_GPIO_SV[137]=1; if(Main_Version<=1){Set_Main_IP(slv_reg137, 1);}
+    #define  VB3_Relay_CLR                                           Main_IP_GPIO_SV[137]=0; if(Main_Version<=1){Set_Main_IP(slv_reg137, 0);}
+    #define  VB3_Relay_READ                                          (Main_IP_GPIO_SV[137])
+
+    #define  IB2_Relay_OUTPUT                                        ;
+    #define  IB2_Relay_SET                                           Main_IP_GPIO_SV[138]=1; if(Main_Version<=1){Set_Main_IP(slv_reg138, 1);}
+    #define  IB2_Relay_CLR                                           Main_IP_GPIO_SV[138]=0; if(Main_Version<=1){Set_Main_IP(slv_reg138, 0);}
+    #define  IB2_Relay_READ                                          (Main_IP_GPIO_SV[138])
+
+    #define  FAN_Switching_OUTPUT                                    ;
+    #define  FAN_Switching_SET                                       Main_IP_GPIO_SV[139]=1; Set_Main_IP(slv_reg139, 1);
+    #define  FAN_Switching_CLR                                       Main_IP_GPIO_SV[139]=0; Set_Main_IP(slv_reg139, 0);
+    #define  FAN_Switching_READ                                      (Main_IP_GPIO_SV[139])
+
+    #define  FAN_Amplifier_OUTPUT                                    ;
+    #define  FAN_Amplifier_SET                                       if(Main_Version<=1){Main_IP_GPIO_SV[140]=1; Set_Main_IP(slv_reg140, 1);}
+    #define  FAN_Amplifier_CLR                                       if(Main_Version<=1){Main_IP_GPIO_SV[140]=0; Set_Main_IP(slv_reg140, 0);}
+
+    #define  Opto_IA1_OUTPUT                                         ;
+    #define  Opto_IA1_SET                                            Main_IP_GPIO_SV[141]=1; if(Main_Version<=1){Set_Main_IP(slv_reg141, 1);}
+    #define  Opto_IA1_CLR                                            Main_IP_GPIO_SV[141]=0; if(Main_Version<=1){Set_Main_IP(slv_reg141, 0);}
+    #define  Opto_IA1_READ                                           (Main_IP_GPIO_SV[141])
+
+    #define  VA3_Relay_OUTPUT                                        ;
+    #define  VA3_Relay_SET                                           Main_IP_GPIO_SV[142]=1; if(Main_Version<=1){Set_Main_IP(slv_reg142, 1);}
+    #define  VA3_Relay_CLR                                           Main_IP_GPIO_SV[142]=0; if(Main_Version<=1){Set_Main_IP(slv_reg142, 0);}
+    #define  VA3_Relay_READ                                          (Main_IP_GPIO_SV[142])
+
+    #define  IA2_Relay_OUTPUT                                        ;
+    #define  IA2_Relay_SET                                           Main_IP_GPIO_SV[143]=1; if(Main_Version<=1){Set_Main_IP(slv_reg143, 1);}
+    #define  IA2_Relay_CLR                                           Main_IP_GPIO_SV[143]=0; if(Main_Version<=1){Set_Main_IP(slv_reg143, 0);}
+    #define  IA2_Relay_READ                                          (Main_IP_GPIO_SV[143])
+
+    #define  IA1_Relay_OUTPUT                                        ;
+    #define  IA1_Relay_SET                                           Main_IP_GPIO_SV[144]=1; if(Main_Version<=1){Set_Main_IP(slv_reg144, 1);}
+    #define  IA1_Relay_CLR                                           Main_IP_GPIO_SV[144]=0; if(Main_Version<=1){Set_Main_IP(slv_reg144, 0);}
+    #define  IA1_Relay_READ                                          (Main_IP_GPIO_SV[144])
+
+    #define  IA3_Relay_OUTPUT                                        ;
+    #define  IA3_Relay_SET                                           Main_IP_GPIO_SV[145]=1; if(Main_Version<=1){Set_Main_IP(slv_reg145, 1);}
+    #define  IA3_Relay_CLR                                           Main_IP_GPIO_SV[145]=0; if(Main_Version<=1){Set_Main_IP(slv_reg145, 0);}
+    #define  IA3_Relay_READ                                          (Main_IP_GPIO_SV[145])
+
+    #define  CS_DA_IA1_OUTPUT                                        ;
+    #define  CS_DA_IA1_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[146]=1; Set_Main_IP(slv_reg146, 1);}
+    #define  CS_DA_IA1_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[146]=0; Set_Main_IP(slv_reg146, 0);}
+
+    #define  CS_DA_IA2_OUTPUT                                        ;
+    #define  CS_DA_IA2_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[147]=1; Set_Main_IP(slv_reg147, 1);}
+    #define  CS_DA_IA2_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[147]=0; Set_Main_IP(slv_reg147, 0);}
+
+    #define  CS_DA_IA3_OUTPUT                                        ;
+    #define  CS_DA_IA3_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[148]=1; Set_Main_IP(slv_reg148, 1);}
+    #define  CS_DA_IA3_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[148]=0; Set_Main_IP(slv_reg148, 0);}
+
+    #define  CS_THERMAL_BOARD1_OUTPUT                                ;
+    #define  CS_THERMAL_BOARD1_SET                                   if(Main_Version<=1){Main_IP_GPIO_SV[149]=1; Set_Main_IP(slv_reg149, 1);}
+    #define  CS_THERMAL_BOARD1_CLR                                   if(Main_Version<=1){Main_IP_GPIO_SV[149]=0; Set_Main_IP(slv_reg149, 0);}
+
+    #define  Opto_VB3_OUTPUT                                         ;
+    #define  Opto_VB3_SET                                            Main_IP_GPIO_SV[150]=1; if(Main_Version<=1){Set_Main_IP(slv_reg150, 1);}
+    #define  Opto_VB3_CLR                                            Main_IP_GPIO_SV[150]=0; if(Main_Version<=1){Set_Main_IP(slv_reg150, 0);}
+    #define  Opto_VB3_READ                                           (Main_IP_GPIO_SV[150])
+
+    #define  CS_DA_IB1_OUTPUT                                        ;
+    #define  CS_DA_IB1_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[151]=1; Set_Main_IP(slv_reg151, 1);}
+    #define  CS_DA_IB1_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[151]=0; Set_Main_IP(slv_reg151, 0);}
+
+    #define  CS_THERMAL_BOARD2_OUTPUT                                ;
+    #define  CS_THERMAL_BOARD2_SET                                   if(Main_Version<=1){Main_IP_GPIO_SV[152]=1; Set_Main_IP(slv_reg152, 1);}
+    #define  CS_THERMAL_BOARD2_CLR                                   if(Main_Version<=1){Main_IP_GPIO_SV[152]=0; Set_Main_IP(slv_reg152, 0);}
+
+    #define  Opto_VB1_OUTPUT                                         ;
+    #define  Opto_VB1_SET                                            Main_IP_GPIO_SV[153]=1; if(Main_Version<=1){Set_Main_IP(slv_reg153, 1);}
+    #define  Opto_VB1_CLR                                            Main_IP_GPIO_SV[153]=0; if(Main_Version<=1){Set_Main_IP(slv_reg153, 0);}
+    #define  Opto_VB1_READ                                           (Main_IP_GPIO_SV[153])
+
+    #define  CS_DA_IB2_OUTPUT                                        ;
+    #define  CS_DA_IB2_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[154]=1; Set_Main_IP(slv_reg154, 1);}
+    #define  CS_DA_IB2_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[154]=0; Set_Main_IP(slv_reg154, 0);}
+
+    #define  CS_DA_IB3_OUTPUT                                        ;
+    #define  CS_DA_IB3_SET                                           if(Main_Version<=1){Main_IP_GPIO_SV[155]=1; Set_Main_IP(slv_reg155, 1);}
+    #define  CS_DA_IB3_CLR                                           if(Main_Version<=1){Main_IP_GPIO_SV[155]=0; Set_Main_IP(slv_reg155, 0);}
+
+    #define  Ethernet_VCC_OUTPUT                                     ;
+    #define  Ethernet_VCC_SET                                        Main_IP_GPIO_SV[156]=1; Set_Main_IP(slv_reg156, 1);
+    #define  Ethernet_VCC_CLR                                        Main_IP_GPIO_SV[156]=0; Set_Main_IP(slv_reg156, 0);
+    #define  Ethernet_VCC_READ                                       (Main_IP_GPIO_SV[156])
+
+    #define  Switching_Relay_Board1_OUTPUT                           ;
+    #define  Switching_Relay_Board1_SET                              Main_IP_GPIO_SV[165]=1; Set_Main_IP(slv_reg165, 1);
+    #define  Switching_Relay_Board1_CLR                              Main_IP_GPIO_SV[165]=0; Set_Main_IP(slv_reg165, 0);
+    #define  Switching_Relay_Board1_READ                             (Main_IP_GPIO_SV[165])
+
+    #define   VB2_Relay_OUTPUT                                       ;
+    #define   VB2_Relay_SET                                          Main_IP_GPIO_SV[500]=1;
+    #define   VB2_Relay_CLR                                          Main_IP_GPIO_SV[500]=0;
+    #define   VB2_Relay_READ                                         (Main_IP_GPIO_SV[500])
+
+    #define Opto_VA2_OUTPUT                                          if(Main_Version<=1){Opto_VA1_OUTPUT } else{}
+    #define Opto_VB2_OUTPUT                                          if(Main_Version<=1){                } else{}
+    #define Opto_IA2_OUTPUT                                          if(Main_Version<=1){Opto_IA1_OUTPUT } else{}
+    #define Opto_IA3_OUTPUT                                          if(Main_Version<=1){Opto_IA1_OUTPUT } else{}
+    #define Opto_IB2_OUTPUT                                          if(Main_Version<=1){Opto_IB1_OUTPUT } else{}
+    #define Opto_IB3_OUTPUT                                          if(Main_Version<=1){Opto_IB1_OUTPUT } else{}
+    #define Opto_VA2_INPUT                                          if(Main_Version<=1){Opto_VA1_INPUT  } else{}
+    #define Opto_VB2_INPUT                                          if(Main_Version<=1){                } else{}
+    #define Opto_IA2_INPUT                                          if(Main_Version<=1){Opto_IA1_INPUT  } else{}
+    #define Opto_IA3_INPUT                                          if(Main_Version<=1){Opto_IA1_INPUT  } else{}
+    #define Opto_IB2_INPUT                                          if(Main_Version<=1){Opto_IB1_INPUT  } else{}
+    #define Opto_IB3_INPUT                                          if(Main_Version<=1){Opto_IB1_INPUT  } else{}
+    #define Opto_VA2_CLR                                          if(Main_Version<=1){Opto_VA1_CLR    } else{Main_IP_GPIO_SV[501]=0;}
+    #define Opto_VB2_CLR                                          if(Main_Version<=1){                } else{Main_IP_GPIO_SV[502]=0;}
+    #define Opto_IA2_CLR                                          if(Main_Version<=1){Opto_IA1_CLR    } else{Main_IP_GPIO_SV[503]=0;}
+    #define Opto_IA3_CLR                                          if(Main_Version<=1){Opto_IA1_CLR    } else{Main_IP_GPIO_SV[504]=0;}
+    #define Opto_IB2_CLR                                          if(Main_Version<=1){Opto_IB1_CLR    } else{Main_IP_GPIO_SV[505]=0;}
+    #define Opto_IB3_CLR                                          if(Main_Version<=1){Opto_IB1_CLR    } else{Main_IP_GPIO_SV[506]=0;}
+    #define Opto_VA2_SET                                          if(Main_Version<=1){Opto_VA1_SET    } else{Main_IP_GPIO_SV[501]=1;}
+    #define Opto_VB2_SET                                          if(Main_Version<=1){                } else{Main_IP_GPIO_SV[502]=1;}
+    #define Opto_IA2_SET                                          if(Main_Version<=1){Opto_IA1_SET    } else{Main_IP_GPIO_SV[503]=1;}
+    #define Opto_IA3_SET                                          if(Main_Version<=1){Opto_IA1_SET    } else{Main_IP_GPIO_SV[504]=1;}
+    #define Opto_IB2_SET                                          if(Main_Version<=1){Opto_IB1_SET    } else{Main_IP_GPIO_SV[505]=1;}
+    #define Opto_IB3_SET                                          if(Main_Version<=1){Opto_IB1_SET    } else{Main_IP_GPIO_SV[506]=1;}
+    #define Opto_VA2_READ                                          (Main_Version<=1? Opto_VA1_READ:     Main_IP_GPIO_SV[501])
+    #define Opto_VB2_READ                                          (Main_Version<=1? 0            :     Main_IP_GPIO_SV[502])
+    #define Opto_IA2_READ                                          (Main_Version<=1? Opto_IA1_READ:     Main_IP_GPIO_SV[503])
+    #define Opto_IA3_READ                                          (Main_Version<=1? Opto_IA1_READ:     Main_IP_GPIO_SV[504])
+    #define Opto_IB2_READ                                          (Main_Version<=1? Opto_IB1_READ:     Main_IP_GPIO_SV[505])
+    #define Opto_IB3_READ                                          (Main_Version<=1? Opto_IB1_READ:     Main_IP_GPIO_SV[506])
+
+    #define CS_AD_VB2_SET                                                        ;
+    #define CS_AD_VB2_CLR                                                        ;
+
+    #define CS_AD_VI_OUTPUT                                                        CS_AD_VA1_OUTPUT;CS_AD_VA2_OUTPUT;CS_AD_VA3_OUTPUT;CS_AD_VB3_OUTPUT;CS_AD_IA1_OUTPUT;CS_AD_IA2_OUTPUT;CS_AD_IA3_OUTPUT;CS_AD_IB1_OUTPUT;CS_AD_IB2_OUTPUT;CS_AD_IB3_OUTPUT;CS_AD_VB1_OUTPUT;
+    #define CS_AD_SET                                                            CS_AD_VA1_SET;CS_AD_VA2_SET;CS_AD_VA3_SET;CS_AD_VB3_SET;CS_AD_IA1_SET;CS_AD_IA2_SET;CS_AD_IA3_SET;CS_AD_IB1_SET;CS_AD_IB2_SET;CS_AD_IB3_SET;CS_AD_VB1_SET;
+    #define CS_AD_CLR                                                            CS_AD_VA1_CLR;CS_AD_VA2_CLR;CS_AD_VA3_CLR;CS_AD_VB3_CLR;CS_AD_IA1_CLR;CS_AD_IA2_CLR;CS_AD_IA3_CLR;CS_AD_IB1_CLR;CS_AD_IB2_CLR;CS_AD_IB3_CLR;CS_AD_VB1_CLR;
+
+
+
+    #define Enable_CLKS_OUTPUT                                                    Enable_CLK_0_OUTPUT;CS_595_Enable_CLK_1_OUTPUT;Enable_CLK_2_OUTPUT;Enable_CLK_3_OUTPUT;Enable_CLK_4_OUTPUT;
+
+    #define  CS_DA_OUTPUT                                                        CS_DA_VA1_OUTPUT;CS_DA_VA2_OUTPUT;CS_DA_VA3_OUTPUT; CS_DA_VB1_OUTPUT; CS_DA_VB2_OUTPUT; CS_DA_VB3_OUTPUT;CS_DA_IA1_OUTPUT;CS_DA_IA2_OUTPUT;CS_DA_IA3_OUTPUT;CS_DA_IB1_OUTPUT;CS_DA_IB2_OUTPUT;CS_DA_IB3_OUTPUT;
+    #define  CS_DA_SET                                                            CS_DA_VA1_SET;CS_DA_VA2_SET;CS_DA_VA3_SET;CS_DA_VB1_SET;CS_DA_VB2_SET;CS_DA_VB3_SET;CS_DA_IA1_SET;CS_DA_IA2_SET;CS_DA_IA3_SET;CS_DA_IB1_SET;CS_DA_IB2_SET;CS_DA_IB3_SET;
+    #define  CS_DA_CLR                                                            CS_DA_VA1_CLR;CS_DA_VA2_CLR;CS_DA_VA3_CLR;CS_DA_VB1_CLR;CS_DA_VB2_CLR;CS_DA_VB3_CLR;CS_DA_IA1_CLR;CS_DA_IA2_CLR;CS_DA_IA3_CLR;CS_DA_IB1_CLR;CS_DA_IB2_CLR;CS_DA_IB3_CLR;
+
+    #define MIO_PS_500_RESET_OUTn                               (uint32_t)7U
+    #define EMIO_DP83_RESET                                     (uint32_t)56U
+
+    uint8_t                                            IB1_Read_Komak_Because_Read_Has_Problem;
+    XGpioPs_Config *GPIOConfigPtr;
+    XGpioPs xGpioPs;
+
+
+
+    void                       GPIO_Init(void);
+    void                       GPIO_Peripheral_IC_Reset(void);
+#endif  //----------------------   E: GPIO
+#if(1)  //----------------------   S: Temperature Monitoring
+    XAdcPs XAdcInst;
+#endif  //----------------------   E: Temperature Monitoring
+#if(1)  //----------------------   S: CPU Starting
+    u32                        MMUTable;
+    void                       Reset_Share_DDR_Mem_Values(void);
+#endif  //----------------------   E: CPU Starting
+#if(1)  //----------------------   S: Set For Bootloader
+    #define LAST_SSBL_SECTOR_NUM                    103
+    #define LAST_SSBL_PAGE                          255
+    #define DESTROYING_PARTITION_HEADER_SECTOR      167
+    #define LINUX_PARTITION_HEADER_SECTOR           189
+    #define BootloaderApp                           0
+
+    u8 getJumptoApp();
+    u8 getNeedforUpdate();
+    u8 getDongleFlag();
+    void clearJumptoApp();
+    void setJumptoApp();
+    void incrementJumptoApp();
+    void clearNeedforUpdate();
+    void setNeedforUpdate();
+    void clearDongleFlag();
+    void setDongleFlag();
+#endif  //----------------------   E: Set For Bootloader
+#if(1)  //----------------------   S: Share Memory
+    typedef struct{
+        uint8_t             StartPs1;
+        uint8_t             Main_Version;
+        uint8_t             MAC[6];
+        uint8_t             IPConfig[12];
+        uint32_t            Port;
+        uint8_t             Connected;
+        uint32_t            Counter_Disconnect;
+        uint32_t            NumberOfByteRecieve;
+        uint8_t             RecieveLan[RecieveLan_Len];
+        uint32_t            NumberOfByteSend;
+        uint8_t             SendLan[SendLan_Len];
+        uint8_t             StartForDefault;
+        uint32_t            EmacDataLenSend;
+        uint8_t             EmacDataSend[2500];
+        uint32_t            EmacDataLenReciev;
+        uint8_t             EmacDataReciev[2500];
+        double              Time_Stuff_Step;
+        uint8_t             TimeSynchronizer_Type;
+        uint32_t            TimeSynchronizer_XEMACPS_ONE_SECOND;
+        uint32_t            ptp_data[100][5];
+        uint32_t            ptp_data_counter_rear;
+        uint32_t            ptp_data_counter_front;
+    } common_PS0_PS1;
+
+    common_PS0_PS1 *Glb_common_PS0_PS1;
+
+
+#endif  //----------------------   E: Share Memory
+#if(1)  //----------------------   S: AXI Memory
+    #define Main_IP                               XPAR_TESTER_HP_0_S00_AXI_BASEADDR
+
+    typedef enum {
+        Version_SV0=0,
+        Time_NanoSecends_SV1,
+        Time_Secends_SV2,
+        slv_reg3,
+        slv_reg4,
+        slv_reg5,
+        slv_reg6,
+        slv_reg7,
+        slv_reg8,
+        slv_reg9,
+        PWM_Start_SV10,
+        PSFlag_Tell_PL_PickUp_Clock_Counter_GPS_1s_SV11,
+        Timer0_Start_SV12,
+        Timer0_Reset_SV13,
+        Number_Of_15625_In_Step_Log2_SV14,
+        slv_reg15,
+        slv_reg16,
+        slv_reg17,
+        slv_reg18,
+        slv_reg19,
+        slv_reg20,
+        SPI0_Freq_SV21,
+        SPI0_Send_SV22,
+        counter1__32u1_OnlyReadByPS_SV23,
+        SPI0_Start_SV24,
+        slv_reg25,
+        SPI1_Freq_SV26,
+        SPI1_Send_SV27,
+        slv_reg28,
+        SPI1_Start_SV29,
+        slv_reg30,
+        GPS_Clock_Counter_1s_From_PS_SV31,
+        slv_reg32,
+        slv_reg33,
+        slv_reg34,
+        slv_reg35,
+        slv_reg36,
+        slv_reg37,
+        slv_reg38,
+        slv_reg39,
+        GPS_Start_Sync_SV40,
+        slv_reg41,
+        GPS_Sync_Stop_SV42,
+		slv_reg43,
+        Setting_Of_AD_Config_5V_Temp_SV44,
+        slv_reg45,
+        slv_reg46,
+        slv_reg47,
+        slv_reg48,
+        slv_reg49,
+        Clear_Power_Error_SV50,
+        Disable_Protection_Power_1_SV51,
+        RGB_LED_Data00_SV52,
+        RGB_LED_Data01_SV53,
+        RGB_LED_Data02_SV54,
+        RGB_LED_Data03_SV55,
+        RGB_LED_Data04_SV56,
+        RGB_LED_Data05_SV57,
+        RGB_LED_Data06_SV58,
+        RGB_LED_Data07_SV59,
+        slv_reg60,
+        slv_reg61,
+        LED_TotalTime_SV62,
+        LED_TotalTime_SV63,
+        LED_Delay_SV64,
+        Number_Of_15625us_In_125us_Minus1_SV65,
+        Number_Of_15625us_In_125us_Log2_SV66,
+        Number_Of_125us_in_Step_Minus1_SV67,
+        Number_Of_125us_in_Step_Log2_SV68,
+        Count_For_PWM_VA_Amp1_SV69,
+        Count_For_PWM_CA_Amp1_SV70,
+        Count_For_PWM_VA_Amp2_SV71,
+        Count_For_PWM_CA_Amp2_SV72,
+        Count_For_PWM_Main_Amp_SV73,
+        slv_reg74,
+        slv_reg75,
+        slv_reg76,
+        Disable_Protection_Power_2_SV77,
+        Number_Of_Bit_For_595_SV78,
+        Number_Of_Bit_For_ADDA_SV79,
+        Number_Of_Bit_For_AD_Config_SV80,
+        Setting_Of_AD_Config_10V_Contoller_SV81,
+        Disable_Protection_Power_3_SV82,
+        Power_Resistor_I_0_4A_Power_Refrence_SV83,
+        slv_reg84,
+        Power_Resistor_I_0_4A_Maximum_Power_Integral_SV85,
+        Freq1_SV86,
+        Freq2_SV87,
+        delay1_SV88,
+        delay2_SV89,
+        ADConfig_SV90,
+        delay3_SV91,
+        slv_reg92,
+        CalcPower_Burn_VP_V_SV93,
+        Start_Calculation_For_PSPI_SV94,
+        CalcPowerBurn_Max_Power_SV95,
+        CalcPowerBurn_Max_Power_Integral_SV96,
+        Setting_Of_AD_Config_12V_BI_11_0625V_BI_8_5V_BI_7_SV97,
+        slv_reg98,
+        I_0_4A_Reduce_SV99,
+        slv_reg100,
+        slv_reg101,
+        slv_reg102,
+        slv_reg103,
+        slv_reg104,
+        slv_reg105,
+        slv_reg106,
+        slv_reg107,
+        slv_reg108,
+        slv_reg109,
+        slv_reg110,
+        slv_reg111,
+        slv_reg112,
+        slv_reg113,
+        slv_reg114,
+        slv_reg115,
+        slv_reg116,
+        slv_reg117,
+        slv_reg118,
+        slv_reg119,
+        slv_reg120,
+        slv_reg121,
+        slv_reg122,
+        slv_reg123,
+        slv_reg124,
+        slv_reg125,
+        slv_reg126,
+        slv_reg127,
+        slv_reg128,
+        slv_reg129,
+        slv_reg130,
+        slv_reg131,
+        slv_reg132,
+        slv_reg133,
+        slv_reg134,
+        slv_reg135,
+        slv_reg136,
+        slv_reg137,
+        slv_reg138,
+        slv_reg139,
+        slv_reg140,
+        slv_reg141,
+        slv_reg142,
+        slv_reg143,
+        slv_reg144,
+        slv_reg145,
+        slv_reg146,
+        slv_reg147,
+        slv_reg148,
+        slv_reg149,
+        slv_reg150,
+        slv_reg151,
+        slv_reg152,
+        slv_reg153,
+        slv_reg154,
+        slv_reg155,
+        slv_reg156,
+        slv_reg157,
+        slv_reg158,
+        slv_reg159,
+        slv_reg160,
+        slv_reg161,
+        slv_reg162,
+        slv_reg163,
+        slv_reg164,
+        slv_reg165,
+        slv_reg166,
+        slv_reg167,
+        slv_reg168,
+        slv_reg169,
+        slv_reg170,
+        slv_reg171,
+        slv_reg172,
+        slv_reg173,
+        slv_reg174,
+        slv_reg175,
+        slv_reg176,
+        slv_reg177,
+        slv_reg178,
+        slv_reg179,
+        slv_reg180,
+        slv_reg181,
+        slv_reg182,
+        slv_reg183,
+        slv_reg184,
+        slv_reg185,
+        slv_reg186,
+        slv_reg187,
+        slv_reg188,
+        slv_reg189,
+        slv_reg190,
+        slv_reg191,
+        slv_reg192,
+        slv_reg193,
+        slv_reg194,
+        slv_reg195,
+        slv_reg196,
+        slv_reg197,
+        slv_reg198,
+        slv_reg199,
+        slv_reg200,
+        Start_Intrrupt_Tester_Main_SV201,
+        slv_reg202,
+        slv_reg203,
+        slv_reg204,
+        slv_reg205,
+        slv_reg206,
+        slv_reg207,
+        slv_reg208,
+        slv_reg209,
+        slv_reg210,
+        slv_reg211,
+        slv_reg212,
+        slv_reg213,
+        slv_reg214,
+        slv_reg215,
+        slv_reg216,
+        slv_reg217,
+        slv_reg218,
+        slv_reg219,
+        slv_reg220,
+        slv_reg221,
+        slv_reg222,
+        slv_reg223,
+        GPS_Time_In_second_for_Wait_To_Become_Unsync_SV224,
+        slv_reg225,
+        slv_reg226,
+        slv_reg227,
+        slv_reg228,
+        slv_reg229,
+        slv_reg230,
+        slv_reg231,
+        Zarib_Ins_Power_SV232,
+        slv_reg233,
+        slv_reg234,
+        Number_Of_15625_For_Intrupt_SV235,
+        RGB_LED_Data10_SV236,
+        RGB_LED_Data11_SV237,
+        RGB_LED_Data12_SV238,
+        RGB_LED_Data13_SV239,
+        RGB_LED_Data14_SV240,
+        RGB_LED_Data15_SV241,
+        RGB_LED_Data16_SV242,
+        RGB_LED_Data17_SV243,
+        LED_Number_of_Total_SV244,
+        Pin_MISO_165_Select_SV245,
+        EXTERNAL_SPI_Send_SV246,
+        slv_reg247,
+        EXTERNAL_SPI_Start_SV248,
+        EXTERNAL_SPI_Freq_SV249,
+        slv_reg250,
+        LED_Cheshmak_1_SV251,
+        LED_Cheshmak_2_SV252,
+        LED_Cheshmak_3_SV253,
+        Max_Current_BO_Relay_SV254,
+        Diff_Max_Current_BO_Relay_Transistor_SV255,
+        slv_reg256,
+        slv_reg257,
+        slv_reg258,
+        slv_reg259,
+        slv_reg260,
+        slv_reg261,
+        Calibration_To_FPGA_part1_SV262,
+        Calibration_To_FPGA_part2_SV263,
+        Calibration_To_FPGA_part3_SV264,
+        Calibration_To_FPGA_part4_SV265,
+        slv_reg266,
+        slv_reg267,
+        slv_reg268,
+        slv_reg269,
+        slv_reg270,
+        slv_reg271,
+        slv_reg272,
+        slv_reg273,
+        slv_reg274,
+        slv_reg275,
+        Maximum_Counter_For_Overcurrent_Board_SV276,
+        Increase_Number_For_Overcurrent_Board_SV277,
+        slv_reg278,
+        slv_reg279,
+        slv_reg280,
+        slv_reg281,
+        slv_reg282,
+        slv_reg283,
+        slv_reg284,
+        slv_reg285,
+        slv_reg286,
+        slv_reg287,
+        slv_reg288,
+        GPS_Shift_1ms_SV289,
+        slv_reg290,
+        SB_Limit_Start_Max_Current_overcurrent_Swithing_SV291,
+        SB_Coefficient_Limit_Start_Max_Current_overcurrent_Swithing_SV292,
+        Is_Simulation_SV293,
+        FRA_SV294,
+        FRA_SV295,
+        slv_reg296,
+        slv_reg297,
+        Current_Of_Voltage_Coeficient_In_Low_Gain_SV298,
+        Current_Of_Current_Coeficient_In_Low_Gain_SV299,
+        slv_reg300,
+        slv_reg301,
+        slv_reg302,
+        slv_reg303,
+        slv_reg304,
+        slv_reg305,
+        slv_reg306,
+        slv_regv307,
+        slv_reg308,
+        slv_reg309,
+        slv_reg310,
+        slv_reg311,
+        slv_reg312,
+        slv_reg313,
+        slv_reg314,
+        slv_reg315,
+        slv_reg316,
+        slv_reg317,
+        slv_reg318,
+        slv_reg319,
+        slv_reg320,
+        slv_reg321,
+        slv_reg322,
+        slv_reg323,
+        slv_reg324,
+        slv_reg325,
+        slv_reg326,
+        slv_reg327,
+        slv_reg328,
+        slv_reg329,
+        slv_reg330,
+        slv_reg331,
+        slv_reg332,
+        slv_reg333,
+        slv_reg334,
+        slv_reg335,
+        slv_reg336,
+        slv_reg337,
+        slv_reg338,
+        slv_reg339,
+        slv_reg340,
+        slv_reg341,
+        slv_reg342,
+        slv_reg343,
+        slv_reg344,
+        slv_reg345,
+        slv_reg346,
+        slv_reg347,
+        slv_reg348,
+        slv_reg349,
+        slv_reg350,
+        slv_reg351,
+        slv_reg352,
+        slv_reg353,
+        slv_reg354,
+        slv_reg355,
+        slv_reg356,
+        slv_reg357,
+        slv_reg358,
+        slv_reg359,
+        slv_reg360,
+        slv_reg361,
+        slv_reg362,
+        slv_reg363,
+        slv_reg364,
+        slv_reg365,
+        slv_reg366,
+        slv_reg367,
+        slv_reg368,
+        slv_reg369,
+        slv_reg370,
+        slv_reg371,
+        slv_reg372,
+        slv_reg373,
+        slv_reg374,
+        slv_reg375,
+        slv_reg376,
+        slv_reg377,
+        slv_reg378,
+        slv_reg379,
+        slv_reg380,
+        slv_reg381,
+        slv_reg382,
+        slv_reg383,
+        slv_reg384,
+        slv_reg385,
+        slv_reg386,
+        slv_reg387,
+        slv_reg388,
+        slv_reg389,
+        slv_reg390,
+        slv_reg391,
+        slv_reg392,
+        slv_reg393,
+        slv_reg394,
+        slv_reg395,
+        slv_reg396,
+        slv_reg397,
+        slv_reg398,
+        slv_reg399,
+        slv_reg400,
+        slv_reg401,
+        slv_reg402,
+        slv_reg403,
+        slv_reg404,
+        slv_reg405,
+        slv_reg406,
+        slv_reg407,
+        slv_reg408,
+        slv_reg409,
+        slv_reg410,
+        slv_reg411,
+        slv_reg412,
+        slv_reg413,
+        slv_reg414,
+        slv_reg415,
+        slv_reg416,
+        slv_reg417,
+        slv_reg418,
+        slv_reg419,
+        slv_reg420,
+        slv_reg421,
+        slv_reg422,
+        slv_reg423,
+        slv_reg424,
+        slv_reg425,
+        slv_reg426,
+        slv_reg427,
+        slv_reg428,
+        slv_reg429,
+        slv_reg430,
+        slv_reg431,
+        slv_reg432,
+        slv_reg433,
+        slv_reg434,
+        slv_reg435,
+        Consider_8_As_Simple_0_Smart_1_SV436,
+        slv_reg437,
+        slv_reg438,
+        slv_reg439,
+        slv_reg440,
+        slv_reg441,
+        slv_reg442,
+        slv_reg443,
+        slv_reg444,
+        slv_reg445,
+        slv_reg446,
+        slv_reg447,
+        slv_reg448,
+        slv_reg449,
+        slv_reg450,
+        slv_reg451,
+        slv_reg452,
+        slv_reg453,
+        slv_reg454,
+        slv_reg455,
+        slv_reg456,
+        slv_reg457,
+        slv_reg458,
+        slv_reg459,
+        slv_reg460,
+        slv_reg461,
+        slv_reg462,
+        slv_reg463,
+        slv_reg464,
+        slv_reg465,
+        slv_reg466,
+        slv_reg467,
+        slv_reg468,
+        slv_reg469,
+        slv_reg470,
+        slv_reg471,
+        slv_reg472,
+        slv_reg473,
+        slv_reg474,
+        slv_reg475,
+        slv_reg476,
+        slv_reg477,
+        slv_reg478,
+        slv_reg479,
+        slv_reg480,
+        slv_reg481,
+        SB_Current_Of_Output_Selection_SV482,
+        slv_reg483,
+        slv_reg484,
+        Parallel_Shift_SV485,
+        slv_reg486,
+        slv_reg487,
+        slv_reg488,
+        slv_reg489,
+        slv_reg490,
+        slv_reg491,
+        slv_reg492,
+        slv_reg493,
+        slv_reg494,
+        slv_reg495,
+        slv_reg496,
+        slv_reg497,
+        slv_reg498,
+        slv_reg499,
+        slv_reg500,
+        slv_reg501,
+        Freqx_SB_SV502,
+        AD_Config_SB_SV503,
+        SB_NumberOfBits_SV504,
+        slv_reg505,
+        slv_reg506,
+        slv_reg507,
+        Pickup_For_Overcurrent_Board_SV508,
+        slv_reg509,
+        slv_reg510,
+        slv_reg511,
+    } Main_IP_Enum;
+
+    uint32_t  Main_IP_GPIO_SV[600], Main_IP_Shift_Register_Enable_Buck_SV77, Main_IP_Shift_Register_Enable_Buck_SV77_Old, Main_IP_Shift_Register_Vivado_Detect_Ver;
+
+    void Set_Main_IP(Main_IP_Enum IP_Number, uint32_t value);
+#endif  //----------------------   E: AXI Memory
+#if(1)  //----------------------   S: OCM Read Write Memory
+    #define Flag_DDR_FPGA                                                 0
+    #define Channel_Value_DDR_FPGA                                        1
+    #define Shift_Register_All_DDR_FPGA                                   2
+    #define Counter_MUX_ADC_DDR_FPGA                                      3
+    #define BI_1_8_Dry_Wet_DDR_FPGA                                       4
+    #define BI_9_10_Dry_Wet_DDR_FPGA                                      5
+    #define CountTotal_Frame_EndActual_StepTime_DDR_FPGA                  6
+    #define BO_Calibration_DDR_FPGA                                       7
+    #define IsCalibrationMode_Changed_DDR_FPGA                            8
+    #define BI_Variables_DDR_FPGA                                         9
+    #define BO_Variables_DDR_FPGA                                         10
+    #define X_Calibration_Main_Cross_VDS_Stuff_DDR_FPGA                   11
+    #define Transfer_Value_For_Check_DDR_FPGA                             12
+    #define PWM_Setting_For_Check_DDR_FPGA                                13
+    #define Resistors_Calibration_DDR_FPGA                                14
+    #define Time_Clock_DDR_FPGA                                           15
+    #define Transfer_Data_From_SDK_To_FPGA_DDR_FPGA                       16
+
+    #define Address_Channel_Value_DDR_FPGA                                   4  // up to 4 + (12+12*32*2)*4+4 = 3128
+    #define Address_Shift_Register_All_DDR_FPGA                           3132  // up to 1588 + 8*4           = 3164
+    #define Address_Counter_MUX_ADC_DDR_FPGA                              3164  // up to 1620 + 1*4           = 3168
+    #define Address_BI_1_8_Dry_Wet_DDR_FPGA                               3168  // up to 1624 + 4             = 3172
+    #define Address_BI_9_10_Dry_Wet_DDR_FPGA                              3172  // up to 1628 + 4             = 3176
+    #define Address_BI_1_8_Calibration_DDR_FPGA                           3176  // up to 1632 + 5*8*8         = 3496
+    #define Address_BI_9_10_Calibration_DDR_FPGA                          3496  // up to 1952 + 2*6*8         = 3592
+    #define Address_CountTotal_Frame_EndActual_StepTime_DDR_FPGA          3592  // up to 2048 + 4*4           = 3608
+    #define Address_BO_Calibration_DDR_FPGA                               3608  // up to 2064 + 4+4*16        = 3676
+    #define Address_IsCalibrationMode_Changed_DDR_FPGA                    3676  // up to 2132 + 4             = 3680
+    #define Address_BI_Variables_DDR_FPGA                                 3680  // up to 2136 + 4*4*10 +5*4   = 3860 :4 Bytes for 4 variables for 10 BI & 4 other single variables
+    #define Address_BO_Variables_DDR_FPGA                                 3860  // up to 2316 + 4             = 3864
+    #define Address_X_Calibration_Main_Cross_VDS_Stuff_DDR_FPGA           3864  // up to 2320 + (12+12)*4     = 3960
+    #define Address_Transfer_Value_For_Check_DDR_FPGA                     3960  // up to 2416 + (10)*4        = 4000 : 10 Variable like slv_reg
+    #define Address_PWM_Setting_For_Check_DDR_FPGA                        4000  // up to 2456 + (10)*4        = 4040
+    #define Address_Resistors_Calibration_DDR_FPGA                        4040  // up to 2588 + ((4*19)+25)*4 = 4444
+    #define Address_Time_Clock_DDR_FPGA                                   4444  // up to 4444 + (3)*4         = 4456
+    #define Address_Transfer_Data_From_SDK_To_FPGA_DDR_FPGA               4456  // up to 4456 + (0)*4         = 4460
+
+
+    #define Time_15625                                       0.0000015625
+    #define Time_125u                                        0.0000125
+
+    #define W_I_V_VA1_Calibrated                                    0
+    #define W_I_V_VA2_Calibrated                                    1
+    #define W_I_V_VA3_Calibrated                                    2
+    #define W_I_V_VB1_Calibrated                                    3
+    #define W_I_V_VB2_Calibrated                                    4
+    #define W_I_V_VB3_Calibrated                                    5
+    #define W_I_V_IA1_Calibrated                                    6
+    #define W_I_V_IA2_Calibrated                                    7
+    #define W_I_V_IA3_Calibrated                                    8
+    #define W_I_V_IB1_Calibrated                                    9
+    #define W_I_V_IB2_Calibrated                                    10
+    #define W_I_V_IB3_Calibrated                                    11
+    #define W_I_I_VA1_Calibrated                                    12
+    #define W_I_I_VA2_Calibrated                                    13
+    #define W_I_I_VA3_Calibrated                                    14
+    #define W_I_I_VB1_Calibrated                                    15
+    #define W_I_I_VB2_Calibrated                                    16
+    #define W_I_I_VB3_Calibrated                                    17
+    #define W_I_I_IA1_Calibrated                                    18
+    #define W_I_I_IA2_Calibrated                                    19
+    #define W_I_I_IA3_Calibrated                                    20
+    #define W_I_I_IB1_Calibrated                                    21
+    #define W_I_I_IB2_Calibrated                                    22
+    #define W_I_I_IB3_Calibrated                                    23
+    #define W_I_BI01_Calibrated                                     24
+    #define W_I_BI02_Calibrated                                     25
+    #define W_I_BI03_Calibrated                                     26
+    #define W_I_BI04_Calibrated                                     27
+    #define W_I_BI05_Calibrated                                     28
+    #define W_I_BI06_Calibrated                                     29
+    #define W_I_BI07_Calibrated                                     30
+    #define W_I_BI08_Calibrated                                     31
+    #define W_I_BI09_Calibrated                                     32
+    #define W_I_BI10_Calibrated                                     33
+    #define W_I_BO1_Calibrated                                      34
+    #define W_I_BO2_Calibrated                                      35
+    #define W_I_BO3_Calibrated                                      36
+    #define W_I_BO4_Calibrated                                      37
+    #define W_I_V_VA1_Others                                        38
+    #define W_I_V_VA2_Others                                        39
+    #define W_I_V_VA3_Others                                        40
+    #define W_I_V_VB1_Others                                        41
+    #define W_I_V_VB2_Others                                        42
+    #define W_I_V_VB3_Others                                        43
+    #define W_I_V_IA1_Others                                        44
+    #define W_I_V_IA2_Others                                        45
+    #define W_I_V_IA3_Others                                        46
+    #define W_I_V_IB1_Others                                        47
+    #define W_I_V_IB2_Others                                        48
+    #define W_I_V_IB3_Others                                        49
+    #define W_I_I_VA1_Others                                        50
+    #define W_I_I_VA2_Others                                        51
+    #define W_I_I_VA3_Others                                        52
+    #define W_I_I_VB1_Others                                        53
+    #define W_I_I_VB2_Others                                        54
+    #define W_I_I_VB3_Others                                        55
+    #define W_I_I_IA1_Others                                        56
+    #define W_I_I_IA2_Others                                        57
+    #define W_I_I_IA3_Others                                        58
+    #define W_I_I_IB1_Others                                        59
+    #define W_I_I_IB2_Others                                        60
+    #define W_I_I_IB3_Others                                        61
+    #define W_I_BI01_Others                                         62
+    #define W_I_BI02_Others                                         63
+    #define W_I_BI03_Others                                         64
+    #define W_I_BI04_Others                                         65
+    #define W_I_BI05_Others                                         66
+    #define W_I_BI06_Others                                         67
+    #define W_I_BI07_Others                                         68
+    #define W_I_BI08_Others                                         69
+    #define W_I_BI09_Others                                         70
+    #define W_I_BI10_Others                                         71
+    #define W_I_BO1_Others                                          72
+    #define W_I_BO2_Others                                          73
+    #define W_I_BO3_Others                                          74
+    #define W_I_BO4_Others                                          75
+    #define W_I_tl                                                  76
+    #define W_I_V_VA1_Final                                         77
+    #define W_I_V_VA2_Final                                         78
+    #define W_I_V_VA3_Final                                         79
+    #define W_I_V_VB1_Final                                         80
+    #define W_I_V_VB2_Final                                         81
+    #define W_I_V_VB3_Final                                         82
+    #define W_I_V_IA1_Final                                         83
+    #define W_I_V_IA2_Final                                         84
+    #define W_I_V_IA3_Final                                         85
+    #define W_I_V_IB1_Final                                         86
+    #define W_I_V_IB2_Final                                         87
+    #define W_I_V_IB3_Final                                         88
+    #define W_I_I_VA1_Final                                         89
+    #define W_I_I_VA2_Final                                         90
+    #define W_I_I_VA3_Final                                         91
+    #define W_I_I_VB1_Final                                         92
+    #define W_I_I_VB2_Final                                         93
+    #define W_I_I_VB3_Final                                         94
+    #define W_I_I_IA1_Final                                         95
+    #define W_I_I_IA2_Final                                         96
+    #define W_I_I_IA3_Final                                         97
+    #define W_I_I_IB1_Final                                         98
+    #define W_I_I_IB2_Final                                         99
+    #define W_I_I_IB3_Final                                         100
+    #define W_I_BI01_Final                                          101
+    #define W_I_BI02_Final                                          102
+    #define W_I_BI03_Final                                          103
+    #define W_I_BI04_Final                                          104
+    #define W_I_BI05_Final                                          105
+    #define W_I_BI06_Final                                          106
+    #define W_I_BI07_Final                                          107
+    #define W_I_BI08_Final                                          108
+    #define W_I_BI09_Final                                          109
+    #define W_I_BI10_Final                                          110
+    #define W_I_BO1_Final                                           111
+    #define W_I_BO2_Final                                           112
+    #define W_I_BO3_Final                                           113
+    #define W_I_BO4_Final                                           114
+    #define W_I_Temp_VIMain_Amp1                                    115
+    #define W_I_Temp_VIMain_Amp2                                    116
+    #define W_I_Rec_165_SW                                          117
+    #define W_I_Protection_N_Power_Burn_Integral_0                  118
+    #define W_I_Protection_N_Power_Burn_Integral_1                  119
+    #define W_I_Protection_N_Power_Burn_Integral_2                  120
+    #define W_I_Protection_N_Power_Burn_Integral_3                  121
+    #define W_I_Protection_N_Power_Burn_Integral_4                  122
+    #define W_I_Protection_N_Power_Burn_Integral_5                  123
+    #define W_I_Protection_P_Power_Burn_Integral_0                  124
+    #define W_I_Protection_P_Power_Burn_Integral_1                  125
+    #define W_I_Protection_P_Power_Burn_Integral_2                  126
+    #define W_I_Protection_P_Power_Burn_Integral_3                  127
+    #define W_I_Protection_P_Power_Burn_Integral_4                  128
+    #define W_I_Protection_P_Power_Burn_Integral_5                  129
+    #define W_I_Total_Calc_Power_Burn_Resistor_10_Ohm_3_Phase_0     130
+    #define W_I_Total_Calc_Power_Burn_Resistor_10_Ohm_3_Phase_1     131
+    #define W_I_Total_Calc_Power_Burn_Resistor_10_Ohm_3_Phase_2     132
+    #define W_I_Total_Calc_Power_Burn_Resistor_10_Ohm_3_Phase_3     133
+    #define W_I_Rec_SB_ADC_Current_Amp1_Calibrated                  134
+    #define W_I_Rec_SB_ADC_Voltage_Input_Amp1_Calibrated            135
+    #define W_I_Rec_SB_ADC_Voltage_VP_Amp1_Calibrated               136
+    #define W_I_Rec_SB_ADC_Voltage_VN_Amp1_Calibrated               137
+    #define W_I_Rec_SB_ADC_Voltage_IP_Amp1_Calibrated               138
+    #define W_I_Rec_SB_ADC_Voltage_IN_Amp1_Calibrated               139
+    #define W_I_Rec_SB_ADC_Current_V_Amp1_Calibrated                140
+    #define W_I_Rec_SB_ADC_Current_I_Amp1_Calibrated                141
+    #define W_I_Rec_SB_ADC_Current_Amp2_Calibrated                  142
+    #define W_I_Rec_SB_ADC_Voltage_Input_Amp2_Calibrated            143
+    #define W_I_Rec_SB_ADC_Voltage_VP_Amp2_Calibrated               144
+    #define W_I_Rec_SB_ADC_Voltage_VN_Amp2_Calibrated               145
+    #define W_I_Rec_SB_ADC_Voltage_IP_Amp2_Calibrated               146
+    #define W_I_Rec_SB_ADC_Voltage_IN_Amp2_Calibrated               147
+    #define W_I_Rec_SB_ADC_Current_V_Amp2_Calibrated                148
+    #define W_I_Rec_SB_ADC_Current_I_Amp2_Calibrated                149
+    #define W_I_Rec_SB_ADC_Current_Amp1_Others                      150
+    #define W_I_Rec_SB_ADC_Voltage_Input_Amp1_Others                151
+    #define W_I_Rec_SB_ADC_Voltage_VP_Amp1_Others                   152
+    #define W_I_Rec_SB_ADC_Voltage_VN_Amp1_Others                   153
+    #define W_I_Rec_SB_ADC_Voltage_IP_Amp1_Others                   154
+    #define W_I_Rec_SB_ADC_Voltage_IN_Amp1_Others                   155
+    #define W_I_Rec_SB_ADC_Current_V_Amp1_Others                    156
+    #define W_I_Rec_SB_ADC_Current_I_Amp1_Others                    157
+    #define W_I_Rec_SB_ADC_Current_Amp2_Others                      158
+    #define W_I_Rec_SB_ADC_Voltage_Input_Amp2_Others                159
+    #define W_I_Rec_SB_ADC_Voltage_VP_Amp2_Others                   160
+    #define W_I_Rec_SB_ADC_Voltage_VN_Amp2_Others                   161
+    #define W_I_Rec_SB_ADC_Voltage_IP_Amp2_Others                   162
+    #define W_I_Rec_SB_ADC_Voltage_IN_Amp2_Others                   163
+    #define W_I_Rec_SB_ADC_Current_V_Amp2_Others                    164
+    #define W_I_Rec_SB_ADC_Current_I_Amp2_Others                    165
+    #define W_I_Rec_SB_ADC_Current_Amp1_Final                       166
+    #define W_I_Rec_SB_ADC_Voltage_Input_Amp1_Final                 167
+    #define W_I_Rec_SB_ADC_Voltage_VP_Amp1_Final                    168
+    #define W_I_Rec_SB_ADC_Voltage_VN_Amp1_Final                    169
+    #define W_I_Rec_SB_ADC_Voltage_IP_Amp1_Final                    170
+    #define W_I_Rec_SB_ADC_Voltage_IN_Amp1_Final                    171
+    #define W_I_Rec_SB_ADC_Current_V_Amp1_Final                     172
+    #define W_I_Rec_SB_ADC_Current_I_Amp1_Final                     173
+    #define W_I_Rec_SB_ADC_Current_Amp2_Final                       174
+    #define W_I_Rec_SB_ADC_Voltage_Input_Amp2_Final                 175
+    #define W_I_Rec_SB_ADC_Voltage_VP_Amp2_Final                    176
+    #define W_I_Rec_SB_ADC_Voltage_VN_Amp2_Final                    177
+    #define W_I_Rec_SB_ADC_Voltage_IP_Amp2_Final                    178
+    #define W_I_Rec_SB_ADC_Voltage_IN_Amp2_Final                    179
+    #define W_I_Rec_SB_ADC_Current_V_Amp2_Final                     180
+    #define W_I_Rec_SB_ADC_Current_I_Amp2_Final                     181
+    #define W_I_Timer0_Counter_15625                                182
+    #define W_I_SPI0_Rec                                            183
+    #define W_I_SPI1_Rec                                            184
+    #define W_I_SPI0_Busy                                           185
+    #define W_I_SPI1_Busy                                           186
+    #define W_I_channel_wet_dry_1                                   187
+    #define W_I_channel_wet_dry_2                                   188
+    #define W_I_channel_wet_dry_3                                   189
+    #define W_I_channel_wet_dry_4                                   190
+    #define W_I_channel_wet_dry_5                                   191
+    #define W_I_channel_wet_dry_6                                   192
+    #define W_I_channel_wet_dry_7                                   193
+    #define W_I_channel_wet_dry_8                                   194
+    #define W_I_channel_wet_dry_9                                   195
+    #define W_I_channel_wet_dry_10                                  196
+    #define W_I_EXTERNAL_SPI_Rec                                    197
+    #define W_I_Final_Power_Burn_1                                  198
+    #define W_I_Final_Power_Burn_2                                  199
+    #define W_I_Final_Power_Burn_3                                  200
+    #define W_I_FRA_Miso_VMEG                                       201
+    #define W_I_FRA_Miso_VPHS                                       202
+    #define W_I_GPS_Clock_Counter_1s_FinalCalc                      203
+    #define W_I_GPS_Clock_Is_Good                                   204
+    #define W_I_GPS_Diff_Clock_Counter                              205
+    #define W_I_GPS_Is_Not_Sync_Counter                             206
+    #define W_I_GPS_Is_Sync                                         207
+    #define W_I_GPS_Start_Sync_Counter_From_Start_Sync              208
+    #define W_I_Not_Have_Power_Burn_Error                           209
+    #define W_I_Rec_165_VP_V1                                       210
+    #define W_I_GPIO_Input_Final                                    211
+	
+    #define W_I_EXTERNAL_SPI_Busy                                   213
+    #define W_I_BI01_Values_Final_HasChange                         214
+    #define W_I_BI02_Values_Final_HasChange                         215
+    #define W_I_BI03_Values_Final_HasChange                         216
+    #define W_I_BI04_Values_Final_HasChange                         217
+    #define W_I_BI05_Values_Final_HasChange                         218
+    #define W_I_BI06_Values_Final_HasChange                         219
+    #define W_I_BI07_Values_Final_HasChange                         220
+    #define W_I_BI08_Values_Final_HasChange                         221
+    #define W_I_BI09_Values_Final_HasChange                         222
+    #define W_I_BI10_Values_Final_HasChange                         223
+    #define W_I_BI01_Last_Change_Time                               224
+    #define W_I_BI02_Last_Change_Time                               225
+    #define W_I_BI03_Last_Change_Time                               226
+    #define W_I_BI04_Last_Change_Time                               227
+    #define W_I_BI05_Last_Change_Time                               228
+    #define W_I_BI06_Last_Change_Time                               229
+    #define W_I_BI07_Last_Change_Time                               230
+    #define W_I_BI08_Last_Change_Time                               231
+    #define W_I_BI09_Last_Change_Time                               232
+    #define W_I_BI10_Last_Change_Time                               233
+    #define W_I_BI01_Final_Last_Change_Time                         234
+    #define W_I_BI02_Final_Last_Change_Time                         235
+    #define W_I_BI03_Final_Last_Change_Time                         236
+    #define W_I_BI04_Final_Last_Change_Time                         237
+    #define W_I_BI05_Final_Last_Change_Time                         238
+    #define W_I_BI06_Final_Last_Change_Time                         239
+    #define W_I_BI07_Final_Last_Change_Time                         240
+    #define W_I_BI08_Final_Last_Change_Time                         241
+    #define W_I_BI09_Final_Last_Change_Time                         242
+    #define W_I_BI10_Final_Last_Change_Time                         243
+    #define W_I_BI01_Max_Value_For_Selectivity                      244
+    #define W_I_BI02_Max_Value_For_Selectivity                      245
+    #define W_I_BI03_Max_Value_For_Selectivity                      246
+    #define W_I_BI04_Max_Value_For_Selectivity                      247
+    #define W_I_BI05_Max_Value_For_Selectivity                      248
+    #define W_I_BI06_Max_Value_For_Selectivity                      249
+    #define W_I_BI07_Max_Value_For_Selectivity                      250
+    #define W_I_BI08_Max_Value_For_Selectivity                      251
+    #define W_I_BI09_Max_Value_For_Selectivity                      252
+    #define W_I_BI10_Max_Value_For_Selectivity                      253
+    #define W_I_BI01_Block_For_Debounce                             254
+    #define W_I_BI02_Block_For_Debounce                             255
+    #define W_I_BI03_Block_For_Debounce                             256
+    #define W_I_BI04_Block_For_Debounce                             257
+    #define W_I_BI05_Block_For_Debounce                             258
+    #define W_I_BI06_Block_For_Debounce                             259
+    #define W_I_BI07_Block_For_Debounce                             260
+    #define W_I_BI08_Block_For_Debounce                             261
+    #define W_I_BI09_Block_For_Debounce                             262
+    #define W_I_BI10_Block_For_Debounce                             263
+    #define W_I_UVAR_00                                             264
+    #define W_I_UVAR_01                                             265
+    #define W_I_UVAR_02                                             266
+    #define W_I_UVAR_03                                             267
+    #define W_I_UVAR_04                                             268
+    #define W_I_UVAR_05                                             269
+    #define W_I_UVAR_06                                             270
+    #define W_I_UVAR_07                                             271
+    #define W_I_UVAR_08                                             272
+    #define W_I_UVAR_09                                             273
+    #define W_I_UVAR_10                                             274
+    #define W_I_UVAR_11                                             275
+    #define W_I_UVAR_12                                             276
+    #define W_I_UVAR_13                                             277
+    #define W_I_UVAR_14                                             278
+    #define W_I_UVAR_15                                             279
+    #define W_I_UVAR_16                                             280
+    #define W_I_UVAR_17                                             281
+    #define W_I_UVAR_18                                             282
+    #define W_I_UVAR_19                                             283
+    #define W_I_UVAR_20                                             284
+    #define W_I_UVAR_21                                             285
+    #define W_I_UVAR_22                                             286
+    #define W_I_UVAR_23                                             287
+
+
+    //61*1024=62464, 77*32*4=9856, 77*4=308, 61*1024+2*77*32*4+4*0-4*W_I_V_VA1_Final=81868
+    #define AssignFromSV_Actual_Calibrated_Other_tl(n, k)  (*( int32_t *)(9856*Glb_Var_During_Test.Toggle_Write+308*(n)+(62464+4*(k))))
+    #define AssignFromSV_Single_data(k)                    (*(uint32_t *)(81868+4*(k)))
+    #define AssignFromSV_Single_data_int(k)                (*(int32_t  *)(81868+4*(k)))
+#endif  //----------------------   E: OCM Read Write Memory
+#if(1)  //----------------------   S: Linux
+    #define MAX_64KBSECTOR_COUNT_DISPATCHER         800      // 50  MB
+    #define MAX_64KBSECTOR_COUNT_OVERLAY            16       // 1   MB
+    #define MAX_64KBSECTOR_COUNT_KERNEL             88       // 5.5 MB
+    #define MAX_64KBSECTOR_COUNT_COMPRESSED_IMAGE   16384   // 1   GB
+    #define LINUX_VERSION_START_SECTOR              (uint16_t)4194303U// Last sector of 2GB
+    #define LINUX_EXTRACTED_IMAGE_START_SECTOR      2048
+    #define LINUX_COMPRESSED_IMAGE_START_SECTOR     2097152
+    #define LINUX_CONFIG_START_SECTOR               4194304
+    #define LINUX_DISPATCHER_START_SECTOR           4194306
+    #define LINUX_OVERLAY_START_SECTOR              4296704
+    #define LINUX_KERNEL_START_SECTOR               4298752
+    #define LINUX_VERSION                           010101// Version of Linux Image.gz
+
+#endif  //----------------------   E: Linux
+#if(1)  //----------------------   S: Write To Flash For Bootloader
+    #define LAST_SSBL_SECTOR_NUM       103
+    #define LAST_SSBL_PAGE             255
+    #define PACKET_SEGMENT_SIZE        1024
+    #define CEILING(X) ((X-(int)(X)) > 0 ? (int)(X+1) : (int)(X))
+
+    uint32_t data_read_SSBL_Version[PAGE_SIZE/4];
+    uint32_t data_read[PAGE_SIZE/4];
+    uint32_t sector_num;
+    uint32_t PacketCounter;
+    uint32_t Glb_Var_During_Test_New_SSBL;
+    uint32_t Counter_Received_Pakect_LED_BO;
+    uint8_t ReadBuffer[SECTOR_SIZE + DATA_OFFSET];
+    uint8_t WriteBuffer[SECTOR_SIZE + DATA_OFFSET];
+    uint8_t read_sector_tmp[EMMC_SECTOR_SIZE];
+    uint8_t erased_data[EMMC_SECTOR_SIZE];
+    uint8_t Buffer[262144000];
+    uint8_t Buffer_Temp[128*512];
+    uint64_t Total_len_QSPI, writing_index, Total_packet_count;
+    int8_t Flag_Bootloader, Flag_linux, CompressedImagetExist;
+    uint32_t CounterWhile, WaitForWhile;
+    uint32_t Packet_Count_QSPI, Sector_Count_LinuxConfig, Sector_Count_LinuxImage, Sector_Count_LinuxDispatcher, Sector_Count_LinuxOverlay, Sector_Count_LinuxKernel, write_count, write_flag;
+    uint8_t LED_Error, Connected;
+    uint16_t SPI_Data1_595, FinalPacketFlag;
+    uint16_t CanSendIpAdress;
+    uint8_t JumpToApplication, NeedForUpdate, DongleFlag, uartSend, Counter_Received_Pakect_LED_BI; //--- the 't' char
+
+    void Change_To_Default(void);
+    void Tester_Init_for_Destroying_SSBL(void);
+    void Variable_Init(void);
+#endif  //----------------------   E: Write To Flash For Bootloader

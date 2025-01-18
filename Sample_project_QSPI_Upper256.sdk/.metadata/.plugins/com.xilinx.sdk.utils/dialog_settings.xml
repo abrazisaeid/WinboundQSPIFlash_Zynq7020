@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item value="D:\All\Software\ZZ-Hardware_Old\Sample_Code_Alghasi\Sample_project_QSPI_Upper256\Sample_project_QSPI_Upper256.sdk\QSPI_Test\Debug" key="bootgen_files_selection"/>
+	<item value="D:\All\Software\ZZ-Hardware_Old\Sample_Code_Alghasi\Sample_project_QSPI_Upper256\Sample_project_QSPI_Upper256.sdk\FSBL\Debug" key="zynq_flash_files_selection"/>
+	<item value="D:\All\Software\ZZ-Hardware_Old\Sample_Code_Alghasi\Sample_project_QSPI_Upper256\Sample_project_QSPI_Upper256.sdk\FSBL\Debug" key="last_stored_selection"/>
+</section>
