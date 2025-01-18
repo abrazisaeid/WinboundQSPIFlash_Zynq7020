@@ -1,0 +1,14 @@
+#include <stdio.h>
+#include "zynq7020.h"
+#include "xil_printf.h"
+
+
+int main()
+{
+    xil_printf("Hello World\n\r");
+    Flash_Init();
+    while(1){
+
+    }
+    return 0;
+}

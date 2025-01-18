@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item value="hw_wrapper_hw_platform_0" key="programflash.hwplatform"/>
+	<item value="D:\All\Software\ZZ-Hardware_Old\Sample_Code_Alghasi\Sample_project_QSPI_Upper256\Sample_project_QSPI_Upper256.sdk\FSBL\Debug\FSBL.elf" key="hw_wrapper_hw_platform_0-fsblFile"/>
+	<item value="false" key="hw_wrapper_hw_platform_0-verifyFlash"/>
+	<item value="true" key="hw_wrapper_hw_platform_0-blankCheck"/>
+	<item value="D:\All\Software\ZZ-Hardware_Old\Sample_Code_Alghasi\Sample_project_QSPI_Upper256\BOOT.bin" key="hw_wrapper_hw_platform_0-imgFile"/>
+	<item value="" key="hw_wrapper_hw_platform_0-offSet"/>
+	<item value="qspi-x4-single" key="hw_wrapper_hw_platform_0-flashType"/>
+	<item value="Auto Detect" key="hw_wrapper_hw_platform_0-device"/>
+	<item value="Local" key="hw_wrapper_hw_platform_0-target"/>
+</section>

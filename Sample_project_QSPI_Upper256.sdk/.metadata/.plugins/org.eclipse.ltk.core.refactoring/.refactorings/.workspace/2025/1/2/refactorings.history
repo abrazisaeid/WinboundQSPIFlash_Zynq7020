@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete 3 resources" deleteContents="false" description="Delete 3 resources" element1="/QSPI_Test/src/platform_config.h" element2="/QSPI_Test/src/platform.c" element3="/QSPI_Test/src/platform.h" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="3" stamp="1736170919444"/>
+</session>

@@ -1,0 +1,12 @@
+#include <stdio.h>
+#include "zynq7020.h"
+#include "xil_printf.h"
+
+
+int main()
+{
+
+    print("Hello World\n\r");
+
+    return 0;
+}
